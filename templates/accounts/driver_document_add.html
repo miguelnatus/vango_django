@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Adicionar Documento - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Adicionar Documento</h2>
+                    
+                    <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.document_type.id_for_label }}" class="form-label">Tipo de Documento</label>
+                            {{ form.document_type }}
+                            <div class="invalid-feedback">
+                                Por favor, selecione o tipo de documento.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.document_file.id_for_label }}" class="form-label">Arquivo</label>
+                            {{ form.document_file }}
+                            <div class="invalid-feedback">
+                                Por favor, selecione um arquivo.
+                            </div>
+                            <div class="form-text">
+                                Formatos aceitos: PDF, JPG, PNG. Tamanho máximo: 5MB.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Enviar Documento</button>
+                            <a href="{% url 'accounts:driver_documents' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Adicionar classes do Bootstrap aos campos do formulário
+    document.addEventListener('DOMContentLoaded', function() {
+        const formFields = document.querySelectorAll('input, select, textarea');
+        formFields.forEach(field => {
+            if (field.type !== 'checkbox' && field.type !== 'radio') {
+                field.classList.add('form-control');
+            }
+            if (field.tagName === 'SELECT') {
+                field.classList.add('form-select');
+            }
+        });
+    });
+</script>
+{% endblock %}

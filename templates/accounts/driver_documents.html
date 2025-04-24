@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Documentos do Motorista - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Documentos do Motorista</h2>
+            <p class="text-muted">Gerencie seus documentos para verificação da conta.</p>
+            
+            {% if not user.is_verified %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Importante:</strong> Você precisa enviar todos os documentos necessários para que sua conta seja verificada.
+                </div>
+            {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Parabéns!</strong> Sua conta está verificada e você já pode oferecer rotas.
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'accounts:driver_document_add' %}" class="btn btn-success">
+                <i class="fas fa-upload me-1"></i> Enviar Documento
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Meus Documentos</h5>
+        </div>
+        <div class="card-body">
+            {% if documents %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tipo de Documento</th>
+                                <th>Data de Envio</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                                <tr>
+                                    <td>{{ document.get_document_type_display }}</td>
+                                    <td>{{ document.uploaded_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if document.is_verified %}
+                                            <span class="badge bg-success">Verificado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ document.document_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if not document.is_verified %}
+                                            <a href="{% url 'accounts:driver_document_delete' document.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-file-alt fa-3x text-muted"></i>
+                    </div>
+                    <h5>Nenhum documento enviado</h5>
+                    <p class="text-muted">Você ainda não enviou nenhum documento para verificação.</p>
+                    <a href="{% url 'accounts:driver_document_add' %}" class="btn btn-success">
+                        <i class="fas fa-upload me-1"></i> Enviar Documento
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Documentos Necessários</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-id-card text-success me-2"></i>
+                                CNH com EAR
+                            </h5>
+                            <p class="card-text">Carteira Nacional de Habilitação com Exerce Atividade Remunerada.</p>
+                            <p class="small text-muted">Formatos aceitos: PDF, JPG, PNG</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-car text-success me-2"></i>
+                                Documento do Veículo
+                            </h5>
+                            <p class="card-text">CRLV (Certificado de Registro e Licenciamento de Veículo) atualizado.</p>
+                            <p class="small text-muted">Formatos aceitos: PDF, JPG, PNG</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-certificate text-success me-2"></i>
+                                Credencial de Turismo
+                            </h5>
+                            <p class="card-text">Credencial emitida pelo órgão de turismo local (se aplicável).</p>
+                            <p class="small text-muted">Formatos aceitos: PDF, JPG, PNG</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-shield-alt text-success me-2"></i>
+                                Seguro
+                            </h5>
+                            <p class="card-text">Comprovante de seguro do veículo com cobertura para passageiros.</p>
+                            <p class="small text-muted">Formatos aceitos: PDF, JPG, PNG</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

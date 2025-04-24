@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}VanGo - Página Inicial{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero bg-dark text-white py-5" style="background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/img/gramado-background.jpg') no-repeat center center; background-size: cover;">
+    <div class="container py-5">
+        <div class="row py-5">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-4">Viaje com conforto e segurança pela Serra Gaúcha</h1>
+                <p class="lead mb-4">Conectamos você a motoristas de vans que oferecem rotas turísticas do Aeroporto Salgado Filho para Gramado e passeios na região.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search Form -->
+<section class="py-4">
+    <div class="container">
+        <div class="card shadow-lg rounded-3 p-4 mx-auto" style="margin-top: -50px; max-width: 900px; z-index: 100; position: relative; background-color: white;">
+            <h4 class="text-center mb-4">Encontre sua van</h4>
+            <form action="{% url 'routes:search' %}" method="get">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="origin" class="form-label">Origem</label>
+                        <input type="text" class="form-control" id="origin" name="origin" placeholder="Ex: Aeroporto Salgado Filho">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="destination" class="form-label">Destino</label>
+                        <input type="text" class="form-control" id="destination" name="destination" placeholder="Ex: Gramado">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="date" name="date">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="passengers" class="form-label">Passageiros</label>
+                        <select class="form-select" id="passengers" name="passengers">
+                            <option value="1">1 passageiro</option>
+                            <option value="2">2 passageiros</option>
+                            <option value="3">3 passageiros</option>
+                            <option value="4">4 passageiros</option>
+                            <option value="5">5+ passageiros</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success w-100 py-3">Buscar Vans Disponíveis</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Por que escolher o VanGo?</h2>
+            <p class="text-muted">Oferecemos uma experiência completa para suas viagens turísticas</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="fas fa-route fa-2x"></i>
+                        </div>
+                        <h4>Rotas Turísticas Especializadas</h4>
+                        <p class="text-muted">Conectamos você a motoristas que conhecem os melhores caminhos e atrações turísticas da região.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="fas fa-shuttle-van fa-2x"></i>
+                        </div>
+                        <h4>Vans Confortáveis e Seguras</h4>
+                        <p class="text-muted">Todos os veículos são verificados e os motoristas são credenciados para garantir sua segurança.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                        <h4>Preços Transparentes</h4>
+                        <p class="text-muted">Sem taxas ocultas. Você sabe exatamente quanto vai pagar antes de confirmar sua reserva.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Routes Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Rotas Populares</h2>
+            <p class="text-muted">Descubra as rotas mais procuradas pelos turistas</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-img-top bg-secondary" style="height: 200px; background: url('/static/img/route-airport-gramado.jpg') no-repeat center center; background-size: cover;"></div>
+                    <div class="card-body p-4">
+                        <h4 class="card-title">Aeroporto Salgado Filho → Gramado</h4>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="fw-bold text-success">R$ 120,00</div>
+                            <div class="text-muted">2h de viagem</div>
+                        </div>
+                        <a href="{% url 'routes:detail' 1 %}" class="btn btn-success w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-img-top bg-secondary" style="height: 200px; background: url('/static/img/route-gramado-canela.jpg') no-repeat center center; background-size: cover;"></div>
+                    <div class="card-body p-4">
+                        <h4 class="card-title">Gramado → Canela</h4>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="fw-bold text-success">R$ 45,00</div>
+                            <div class="text-muted">30min de viagem</div>
+                        </div>
+                        <a href="{% url 'routes:detail' 2 %}" class="btn btn-success w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-img-top bg-secondary" style="height: 200px; background: url('/static/img/route-gramado-tour.jpg') no-repeat center center; background-size: cover;"></div>
+                    <div class="card-body p-4">
+                        <h4 class="card-title">Tour Completo por Gramado</h4>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="fw-bold text-success">R$ 180,00</div>
+                            <div class="text-muted">6h de passeio</div>
+                        </div>
+                        <a href="{% url 'routes:detail' 3 %}" class="btn btn-success w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'routes:list' %}" class="btn btn-outline-success">Ver Todas as Rotas</a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Como Funciona</h2>
+            <p class="text-muted">Simples, rápido e seguro</p>
+        </div>
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <span class="fw-bold fs-4">1</span>
+                </div>
+                <h4>Busque sua Rota</h4>
+                <p class="text-muted">Informe origem, destino, data e número de passageiros para encontrar vans disponíveis.</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <span class="fw-bold fs-4">2</span>
+                </div>
+                <h4>Escolha sua Van</h4>
+                <p class="text-muted">Compare preços, horários e avaliações dos motoristas para escolher a melhor opção.</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <span class="fw-bold fs-4">3</span>
+                </div>
+                <h4>Reserve e Viaje</h4>
+                <p class="text-muted">Faça sua reserva, receba a confirmação e aproveite sua viagem com conforto e segurança.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">O que nossos usuários dizem</h2>
+            <p class="text-muted">Experiências reais de quem já viajou com o VanGo</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="card-body">
+                        <p class="mb-4 fst-italic">"Cheguei no aeroporto Salgado Filho e em poucos minutos já tinha reservado uma van para Gramado. O motorista foi super pontual e a viagem foi muito confortável. Recomendo!"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-secondary me-3" style="width: 50px; height: 50px; background: url('/static/img/user-1.jpg') no-repeat center center; background-size: cover;"></div>
+                            <div>
+                                <h5 class="mb-0">Ana Luiza</h5>
+                                <p class="text-muted mb-0">Turista do Rio de Janeiro</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="card-body">
+                        <p class="mb-4 fst-italic">"Usamos o VanGo para fazer um tour completo por Gramado e Canela. O motorista conhecia todos os pontos turísticos e nos deu dicas valiosas. Valeu muito a pena!"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-secondary me-3" style="width: 50px; height: 50px; background: url('/static/img/user-2.jpg') no-repeat center center; background-size: cover;"></div>
+                            <div>
+                                <h5 class="mb-0">Carlos Eduardo</h5>
+                                <p class="text-muted mb-0">Turista de São Paulo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-success text-white">
+    <div class="container text-center py-4">
+        <h2 class="fw-bold mb-3">Pronto para viajar com conforto e segurança?</h2>
+        <p class="lead mb-4">Cadastre-se agora e tenha acesso a todas as rotas turísticas da Serra Gaúcha.</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg px-4">Cadastre-se Grátis</a>
+            <a href="{% url 'routes:list' %}" class="btn btn-outline-light btn-lg px-4">Ver Rotas Disponíveis</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

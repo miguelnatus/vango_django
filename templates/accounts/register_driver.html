@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro de Motorista - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Cadastre-se como Motorista</h2>
+                    
+                    <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome</label>
+                                {{ form.first_name }}
+                                <div class="invalid-feedback">
+                                    Por favor, informe seu nome.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Sobrenome</label>
+                                {{ form.last_name }}
+                                <div class="invalid-feedback">
+                                    Por favor, informe seu sobrenome.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Nome de usuário</label>
+                                {{ form.username }}
+                                <div class="invalid-feedback">
+                                    Por favor, escolha um nome de usuário.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email }}
+                                <div class="invalid-feedback">
+                                    Por favor, informe um email válido.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">Telefone</label>
+                                {{ form.phone }}
+                                <div class="invalid-feedback">
+                                    Por favor, informe seu telefone.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Foto de Perfil</label>
+                                {{ form.profile_picture }}
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label">Biografia</label>
+                                {{ form.bio }}
+                                <div class="form-text">
+                                    Conte um pouco sobre sua experiência como motorista e as regiões que você conhece.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Senha</label>
+                                {{ form.password1 }}
+                                <div class="invalid-feedback">
+                                    Por favor, escolha uma senha.
+                                </div>
+                                <div class="form-text">
+                                    Sua senha deve ter pelo menos 8 caracteres e não pode ser muito comum.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar Senha</label>
+                                {{ form.password2 }}
+                                <div class="invalid-feedback">
+                                    Por favor, confirme sua senha.
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h5 class="alert-heading">Importante!</h5>
+                                    <p>Após o cadastro, você precisará enviar documentos para verificação:</p>
+                                    <ul>
+                                        <li>CNH com EAR (Exerce Atividade Remunerada)</li>
+                                        <li>Documento do veículo</li>
+                                        <li>Credencial de turismo (se aplicável)</li>
+                                        <li>Comprovante de seguro</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        Concordo com os <a href="{% url 'core:terms' %}">Termos de Uso</a> e <a href="{% url 'core:privacy' %}">Política de Privacidade</a>
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Você deve concordar com os termos antes de se cadastrar.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success btn-lg">Cadastrar como Motorista</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p>Já tem uma conta? <a href="{% url 'accounts:login' %}">Faça login</a></p>
+                        <p>Quer se cadastrar como passageiro? <a href="{% url 'accounts:register' %}">Cadastre-se como passageiro</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Adicionar classes do Bootstrap aos campos do formulário
+    document.addEventListener('DOMContentLoaded', function() {
+        const formFields = document.querySelectorAll('input, select, textarea');
+        formFields.forEach(field => {
+            if (field.type !== 'checkbox' && field.type !== 'radio') {
+                field.classList.add('form-control');
+            }
+            if (field.tagName === 'TEXTAREA') {
+                field.classList.add('form-control');
+                field.rows = 4;
+            }
+        });
+    });
+</script>
+{% endblock %}

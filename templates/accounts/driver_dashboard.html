@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel do Motorista - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Bem-vindo(a), {{ user.first_name }}!</h2>
+            <p class="text-muted">Gerencie suas rotas, veículos e reservas.</p>
+            
+            {% if not user.is_verified %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Sua conta ainda não foi verificada.</strong> 
+                    <a href="{% url 'accounts:driver_documents' %}" class="alert-link">Envie seus documentos</a> para começar a oferecer rotas.
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'routes:create' %}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Nova Rota
+            </a>
+            <a href="{% url 'vehicles:create' %}" class="btn btn-outline-success ms-2">
+                <i class="fas fa-car me-1"></i> Novo Veículo
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Estatísticas -->
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <div class="dashboard-stat-value">{{ routes.count }}</div>
+                    <div class="dashboard-stat-label">Rotas Ativas</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="dashboard-stat-value">{{ upcoming_bookings.count }}</div>
+                    <div class="dashboard-stat-label">Reservas Pendentes</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="dashboard-stat-value">R$ {{ revenue|floatformat:2 }}</div>
+                    <div class="dashboard-stat-label">Faturamento</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="dashboard-stat-value">
+                        {% if avg_rating %}
+                            {{ avg_rating|floatformat:1 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                    <div class="dashboard-stat-label">Avaliação Média</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Próximas Viagens -->
+    <div class="card shadow-sm mt-5">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Próximas Viagens</h5>
+            <a href="{% url 'bookings:driver_list' %}" class="btn btn-sm btn-outline-success">Ver Todas</a>
+        </div>
+        <div class="card-body">
+            {% if upcoming_bookings %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Referência</th>
+                                <th>Rota</th>
+                                <th>Data</th>
+                                <th>Passageiros</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in upcoming_bookings %}
+                                <tr>
+                                    <td>{{ booking.booking_reference }}</td>
+                                    <td>{{ booking.route.origin }} → {{ booking.route.destination }}</td>
+                                    <td>{{ booking.booking_date|date:"d/m/Y" }}</td>
+                                    <td>{{ booking.num_passengers }}</td>
+                                    <td>R$ {{ booking.total_price }}</td>
+                                    <td>
+                                        <a href="{% url 'bookings:detail' booking.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'bookings:update_status' booking.id %}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                    </div>
+                    <h5>Nenhuma viagem agendada</h5>
+                    <p class="text-muted">Você não tem nenhuma viagem agendada no momento.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Minhas Rotas -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Minhas Rotas</h5>
+            <a href="{% url 'routes:driver_routes' %}" class="btn btn-sm btn-outline-success">Ver Todas</a>
+        </div>
+        <div class="card-body">
+            {% if routes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Rota</th>
+                                <th>Tipo</th>
+                                <th>Preço</th>
+                                <th>Reservas</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for route in routes|slice:":5" %}
+                                <tr>
+                                    <td>{{ route.origin }} → {{ route.destination }}</td>
+                                    <td>{{ route.get_route_type_display }}</td>
+                                    <td>R$ {{ route.price }}</td>
+                                    <td>{{ route.bookings.count }}</td>
+                                    <td>
+                                        {% if route.is_active %}
+                                            <span class="badge bg-success">Ativa</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inativa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'routes:detail' route.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'routes:edit' route.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-route fa-3x text-muted"></i>
+                    </div>
+                    <h5>Nenhuma rota cadastrada</h5>
+                    <p class="text-muted">Você ainda não cadastrou nenhuma rota.</p>
+                    <a href="{% url 'routes:create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i> Adicionar Rota
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Avaliações Recentes -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Avaliações Recentes</h5>
+            <a href="#" class="btn btn-sm btn-outline-success">Ver Todas</a>
+        </div>
+        <div class="card-body">
+            {% if recent_reviews %}
+                {% for review in recent_reviews %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ review.passenger.get_full_name }}</strong>
+                                <small class="text-muted ms-2">{{ review.created_at|date:"d/m/Y" }}</small>
+                            </div>
+                            <div class="rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="mb-1">{{ review.comment }}</p>
+                        <div class="small text-muted">
+                            Rota: {{ review.route.origin }} → {{ review.route.destination }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Você ainda não recebeu avaliações.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil - VanGo{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center text-md-start">
+                {% if user.profile_picture %}
+                    <div class="profile-avatar mx-auto mx-md-0">
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="img-fluid">
+                    </div>
+                {% else %}
+                    <div class="profile-avatar bg-secondary d-flex align-items-center justify-content-center mx-auto mx-md-0">
+                        <i class="fas fa-user fa-3x text-white"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-9 text-center text-md-start mt-3 mt-md-0">
+                <h2 class="mb-1">{{ user.get_full_name }}</h2>
+                <p class="mb-2">
+                    <span class="badge bg-light text-dark">
+                        {% if user.is_driver %}
+                            Motorista
+                            {% if user.is_verified %}
+                                <i class="fas fa-check-circle text-success ms-1" data-bs-toggle="tooltip" title="Verificado"></i>
+                            {% endif %}
+                        {% else %}
+                            Passageiro
+                        {% endif %}
+                    </span>
+                </p>
+                
+                {% if user.is_driver %}
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">{{ routes_count }}</div>
+                            <div class="profile-stat-label">Rotas</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">{{ vehicles_count }}</div>
+                            <div class="profile-stat-label">Veículos</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">
+                                {% if avg_rating %}
+                                    {{ avg_rating|floatformat:1 }}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <div class="profile-stat-label">Avaliação</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">{{ reviews_count }}</div>
+                            <div class="profile-stat-label">Avaliações</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">{{ bookings_count }}</div>
+                            <div class="profile-stat-label">Reservas</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">{{ completed_bookings }}</div>
+                            <div class="profile-stat-label">Viagens Concluídas</div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-light">
+                        <i class="fas fa-edit me-1"></i> Editar Perfil
+                    </a>
+                    <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-light ms-2">
+                        <i class="fas fa-key me-1"></i> Alterar Senha
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Nome Completo</label>
+                        <div>{{ user.get_full_name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Nome de Usuário</label>
+                        <div>{{ user.username }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Email</label>
+                        <div>{{ user.email }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Telefone</label>
+                        <div>{{ user.phone }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Membro desde</label>
+                        <div>{{ user.date_joined|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.is_driver %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Biografia</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if user.bio %}
+                            <p>{{ user.bio }}</p>
+                        {% else %}
+                            <p class="text-muted">Nenhuma biografia adicionada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Documentos</h5>
+                        <a href="{% url 'accounts:driver_documents' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-file-alt me-1"></i> Gerenciar
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if user.documents.exists %}
+                            <ul class="list-group list-group-flush">
+                                {% for document in user.documents.all %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ document.get_document_type_display }}
+                                        {% if document.is_verified %}
+                                            <span class="badge bg-success">Verificado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendente</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">Nenhum documento enviado.</p>
+                            <a href="{% url 'accounts:driver_document_add' %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-upload me-1"></i> Enviar Documento
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-8">
+            {% if user.is_driver %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Minhas Rotas</h5>
+                        <a href="{% url 'routes:driver_routes' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-route me-1"></i> Ver Todas
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if routes_count > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Rota</th>
+                                            <th>Tipo</th>
+                                            <th>Preço</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for route in user.routes.all|slice:":5" %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'routes:detail' route.id %}">
+                                                        {{ route.origin }} → {{ route.destination }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ route.get_route_type_display }}</td>
+                                                <td>R$ {{ route.price }}</td>
+                                                <td>
+                                                    {% if route.is_active %}
+                                                        <span class="badge bg-success">Ativa</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Inativa</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Você ainda não cadastrou nenhuma rota.</p>
+                            <a href="{% url 'routes:create' %}" class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i> Adicionar Rota
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Avaliações Recentes</h5>
+                        <a href="#" class="btn btn-sm btn-outline-success">Ver Todas</a>
+                    </div>
+                    <div class="card-body">
+                        {% if reviews_count > 0 %}
+                            {% for review in user.reviews_received.all|slice:":3" %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>{{ review.passenger.get_full_name }}</strong>
+                                            <small class="text-muted ms-2">{{ review.created_at|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <div class="rating">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">{{ review.comment }}</p>
+                                    <div class="small text-muted">
+                                        Rota: {{ review.route.origin }} → {{ review.route.destination }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">Você ainda não recebeu avaliações.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Minhas Reservas</h5>
+                        <a href="{% url 'bookings:list' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-list me-1"></i> Ver Todas
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if bookings_count > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Referência</th>
+                                            <th>Rota</th>
+                                            <th>Data</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for booking in user.bookings.all|slice:":5" %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'bookings:detail' booking.id %}">
+                                                        {{ booking.booking_reference }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ booking.route.origin }} → {{ booking.route.destination }}</td>
+                                                <td>{{ booking.booking_date|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    {% if booking.status == 'pending' %}
+                                                        <span class="badge bg-warning text-dark">Pendente</span>
+                                                    {% elif booking.status == 'confirmed' %}
+                                                        <span class="badge bg-success">Confirmada</span>
+                                                    {% elif booking.status == 'cancelled' %}
+                                                        <span class="badge bg-danger">Cancelada</span>
+                                                    {% elif booking.status == 'completed' %}
+                                                        <span class="badge bg-info">Concluída</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Você ainda não fez nenhuma reserva.</p>
+                            <a href="{% url 'routes:list' %}" class="btn btn-success">
+                                <i class="fas fa-search me-1"></i> Buscar Rotas
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Minhas Avaliações</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if user.reviews_given.exists %}
+                            {% for review in user.reviews_given.all|slice:":3" %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>{{ review.driver.get_full_name }}</strong>
+                                            <small class="text-muted ms-2">{{ review.created_at|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <div class="rating">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">{{ review.comment }}</p>
+                                    <div class="small text-muted">
+                                        Rota: {{ review.route.origin }} → {{ review.route.destination }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">Você ainda não fez nenhuma avaliação.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Programa de Indicação - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .referral-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .referral-code {
+        font-size: 2rem;
+        font-weight: bold;
+        letter-spacing: 2px;
+        color: #0d6efd;
+        text-align: center;
+        margin: 20px 0;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+    }
+    
+    .referral-url {
+        word-break: break-all;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .share-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .share-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        color: white;
+        font-size: 18px;
+        transition: all 0.2s ease;
+    }
+    
+    .share-button:hover {
+        transform: scale(1.1);
+    }
+    
+    .facebook-button {
+        background-color: #3b5998;
+    }
+    
+    .twitter-button {
+        background-color: #1da1f2;
+    }
+    
+    .whatsapp-button {
+        background-color: #25d366;
+    }
+    
+    .telegram-button {
+        background-color: #0088cc;
+    }
+    
+    .email-button {
+        background-color: #6c757d;
+    }
+    
+    .referral-stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .referral-table {
+        margin-top: 20px;
+    }
+    
+    .referral-benefits {
+        margin-top: 20px;
+    }
+    
+    .benefit-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .benefit-icon {
+        color: #0d6efd;
+        font-size: 1.2rem;
+        margin-right: 10px;
+        margin-top: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Programa de Indicação</h5>
+                </div>
+                <div class="card-body">
+                    <div class="referral-card">
+                        <h5 class="text-center mb-3">Seu Código de Indicação</h5>
+                        <div class="referral-code">{{ referral_code }}</div>
+                        
+                        <p class="text-center mb-4">Compartilhe este código com seus amigos e ganhe descontos em suas próximas viagens!</p>
+                        
+                        <h6>Link de Indicação:</h6>
+                        <div class="referral-url">{{ referral_url }}</div>
+                        
+                        <h6>Compartilhar via:</h6>
+                        <div class="share-buttons">
+                            <a href="{{ share_urls.facebook }}" target="_blank" class="share-button facebook-button">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="{{ share_urls.twitter }}" target="_blank" class="share-button twitter-button">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="{{ share_urls.whatsapp }}" target="_blank" class="share-button whatsapp-button">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                            <a href="{{ share_urls.telegram }}" target="_blank" class="share-button telegram-button">
+                                <i class="fab fa-telegram-plane"></i>
+                            </a>
+                            <a href="{{ share_urls.email }}" target="_blank" class="share-button email-button">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        </div>
+                        
+                        <div class="referral-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ referrals.count }}</div>
+                                <div class="stat-label">Total de Indicações</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ converted_referrals }}</div>
+                                <div class="stat-label">Indicações Convertidas</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">R$ {{ converted_referrals|multiply:10 }}</div>
+                                <div class="stat-label">Descontos Ganhos</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="referral-benefits">
+                        <h5 class="mb-3">Como Funciona</h5>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <div>
+                                <strong>Compartilhe seu código</strong>
+                                <p>Envie seu código de indicação ou link para amigos e familiares.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div>
+                                <strong>Seus amigos se cadastram</strong>
+                                <p>Quando seus amigos se cadastrarem usando seu código, eles ganham R$ 10 de desconto na primeira viagem.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <div>
+                                <strong>Você ganha recompensas</strong>
+                                <p>Para cada amigo que fizer a primeira viagem, você ganha R$ 10 de desconto em sua próxima reserva.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if referrals %}
+                        <div class="referral-table">
+                            <h5 class="mb-3">Suas Indicações</h5>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuário</th>
+                                            <th>Data</th>
+                                            <th>Plataforma</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for referral in referrals %}
+                                            <tr>
+                                                <td>{{ referral.referred_user.get_full_name }}</td>
+                                                <td>{{ referral.created_at|date:"d/m/Y" }}</td>
+                                                <td>{{ referral.get_platform_display }}</td>
+                                                <td>
+                                                    {% if referral.converted_at %}
+                                                        <span class="badge bg-success">Convertido</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning text-dark">Pendente</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'accounts:dashboard_passenger' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Voltar para o Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

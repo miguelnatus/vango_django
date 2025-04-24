@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Métodos de Pagamento - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-method-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    
+    .payment-method-card:hover {
+        border-color: #adb5bd;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .payment-method-card .card-brand {
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .payment-method-card .card-number {
+        color: #6c757d;
+    }
+    
+    .payment-method-icon {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    
+    .payment-method-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    .default-badge {
+        background-color: #e8f4f8;
+        color: #0d6efd;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Meus Métodos de Pagamento</h5>
+                    <a href="{% url 'payments:payment_method_add' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus-circle me-2"></i> Adicionar Novo
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if payment_methods %}
+                        {% for method in payment_methods %}
+                            <div class="payment-method-card">
+                                <div class="d-flex justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        {% if method.type == 'credit_card' %}
+                                            <div class="payment-method-icon text-primary">
+                                                <i class="fas fa-credit-card"></i>
+                                            </div>
+                                            <div>
+                                                <div class="card-brand">
+                                                    {{ method.card_brand }}
+                                                    {% if method.is_default %}
+                                                        <span class="default-badge">Padrão</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="card-number">•••• •••• •••• {{ method.card_last_digits }}</div>
+                                                <div class="text-muted small">Expira em {{ method.card_expiry_month }}/{{ method.card_expiry_year }}</div>
+                                            </div>
+                                        {% elif method.type == 'debit_card' %}
+                                            <div class="payment-method-icon text-success">
+                                                <i class="fas fa-credit-card"></i>
+                                            </div>
+                                            <div>
+                                                <div class="card-brand">
+                                                    {{ method.card_brand }} (Débito)
+                                                    {% if method.is_default %}
+                                                        <span class="default-badge">Padrão</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="card-number">•••• •••• •••• {{ method.card_last_digits }}</div>
+                                                <div class="text-muted small">Expira em {{ method.card_expiry_month }}/{{ method.card_expiry_year }}</div>
+                                            </div>
+                                        {% elif method.type == 'bank_account' %}
+                                            <div class="payment-method-icon text-info">
+                                                <i class="fas fa-university"></i>
+                                            </div>
+                                            <div>
+                                                <div class="card-brand">
+                                                    {{ method.bank_name }}
+                                                    {% if method.is_default %}
+                                                        <span class="default-badge">Padrão</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="card-number">Agência: {{ method.bank_branch_number }} - Conta: •••• {{ method.bank_account_number|slice:"-4:" }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="payment-method-actions">
+                                        {% if not method.is_default %}
+                                            <form method="post" action="{% url 'payments:payment_method_set_default' method.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-check-circle me-1"></i> Definir como Padrão
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'payments:payment_method_delete' method.id %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash-alt me-1"></i> Remover
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-credit-card fa-3x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">Nenhum método de pagamento cadastrado</h5>
+                            <p class="text-muted">Adicione um método de pagamento para facilitar suas próximas compras.</p>
+                            <a href="{% url 'payments:payment_method_add' %}" class="btn btn-primary mt-2">
+                                <i class="fas fa-plus-circle me-2"></i> Adicionar Método de Pagamento
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'accounts:dashboard_passenger' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Voltar para o Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

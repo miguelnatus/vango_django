@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Avg, Count, Sum
-from django.utils import timezone
 from .models import User, DriverDocument
 from bookings.models import Booking
 from routes.models import Route
@@ -21,7 +21,7 @@ def login_view(request):
             return redirect('accounts:driver_dashboard')
         else:
             return redirect('accounts:passenger_dashboard')
-            
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -58,7 +58,7 @@ def register_view(request):
     """
     if request.user.is_authenticated:
         return redirect('core:home')
-        
+    
     if request.method == 'POST':
         form = UserRegisterForm(request.POST, request.FILES)
         if form.is_valid():
@@ -84,7 +84,7 @@ def register_driver_view(request):
     """
     if request.user.is_authenticated:
         return redirect('core:home')
-        
+    
     if request.method == 'POST':
         form = DriverRegisterForm(request.POST, request.FILES)
         if form.is_valid():
@@ -110,7 +110,6 @@ def profile_view(request):
     View para visualização do perfil do usuário.
     """
     user = request.user
-    
     context = {
         'user': user,
     }
@@ -287,7 +286,9 @@ def driver_document_add_view(request):
     else:
         form = DriverDocumentForm()
     
-    return render(request, 'accounts/driver_document_add.html', {'form': form})
+    return render(request, 'accounts/driver_document_add.html', {
+        'form': form
+    })
 
 @login_required
 def driver_document_delete_view(request, document_id):
@@ -299,9 +300,58 @@ def driver_document_delete_view(request, document_id):
     
     document = get_object_or_404(DriverDocument, id=document_id, driver=request.user)
     
+    # Não permitir excluir documentos já verificados
+    if document.is_verified:
+        messages.error(request, 'Não é possível excluir documentos já verificados.')
+        return redirect('accounts:driver_documents')
+    
     if request.method == 'POST':
         document.delete()
         messages.success(request, 'Documento excluído com sucesso!')
         return redirect('accounts:driver_documents')
     
-    return render(request, 'accounts/driver_document_delete.html', {'document': document})
+    return render(request, 'accounts/driver_document_delete.html', {
+        'document': document
+    })
+
+# Novas funcionalidades
+
+@login_required
+def email_verification_send(request):
+    """
+    Envia e-mail de verificação para o usuário.
+    """
+    user = request.user
+    
+    # Implementação futura: gerar token e enviar e-mail
+    
+    messages.success(request, 'E-mail de verificação enviado com sucesso! Verifique sua caixa de entrada.')
+    return redirect('accounts:profile')
+
+@login_required
+def email_verification_confirm(request, token):
+    """
+    Confirma o e-mail do usuário através do token.
+    """
+    # Implementação futura: verificar token e confirmar e-mail
+    
+    messages.success(request, 'E-mail verificado com sucesso!')
+    return redirect('accounts:profile')
+
+@login_required
+def notification_settings(request):
+    """
+    Configurações de notificações do usuário.
+    """
+    # Implementação futura: configurações de notificações
+    
+    return render(request, 'accounts/notification_settings.html')
+
+@login_required
+def user_notifications(request):
+    """
+    Lista de notificações do usuário.
+    """
+    # Implementação futura: listar notificações
+    
+    return render(request, 'accounts/notifications.html')

@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ route.title }} - Mapa - VanGo{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<style>
+    #route-map {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .map-legend {
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .map-legend i {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        margin-right: 8px;
+        border-radius: 50%;
+        vertical-align: middle;
+    }
+    .origin-marker { background-color: #4CAF50; }
+    .destination-marker { background-color: #F44336; }
+    .stop-marker { background-color: #2196F3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Mapa da Rota</h5>
+                    <a href="{% url 'routes:detail' route.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Voltar para Detalhes
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="route-map"></div>
+                    
+                    <div class="mt-3">
+                        <div class="map-legend mb-3">
+                            <div class="mb-2"><i class="origin-marker"></i> Origem: {{ route.origin_name }}</div>
+                            <div class="mb-2"><i class="destination-marker"></i> Destino: {{ route.destination_name }}</div>
+                            {% if stops %}
+                                <div><i class="stop-marker"></i> Paradas ({{ stops|length }})</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between text-muted small">
+                            <div>Distância total: {{ route.distance_km }} km</div>
+                            <div>Duração estimada: {{ route.duration_minutes }} minutos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Informações da Rota</h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ route.title }}</h5>
+                    <p class="text-muted">{{ route.description }}</p>
+                    
+                    <div class="mb-3">
+                        <h6>Origem</h6>
+                        <p class="mb-1">{{ route.origin_name }}</p>
+                        <p class="text-muted small">{{ route.origin_address }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Destino</h6>
+                        <p class="mb-1">{{ route.destination_name }}</p>
+                        <p class="text-muted small">{{ route.destination_address }}</p>
+                    </div>
+                    
+                    {% if stops %}
+                        <div class="mb-3">
+                            <h6>Paradas</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for stop in stops %}
+                                    <li class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="mb-1">{{ stop.name }}</p>
+                                                <p class="text-muted small mb-0">{{ stop.address }}</p>
+                                            </div>
+                                            <div class="text-muted small">
+                                                {{ stop.duration_minutes }} min
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'bookings:create' route.id %}" class="btn btn-primary">
+                            <i class="fas fa-ticket-alt me-2"></i> Reservar Agora
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados da rota
+        const mapData = {{ map_data|safe }};
+        
+        // Inicializar mapa
+        const map = L.map('route-map');
+        
+        // Adicionar camada de mapa
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Marcadores personalizados
+        const originIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        
+        const destinationIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #F44336; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        
+        const stopIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #2196F3; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+        
+        // Adicionar marcadores
+        const originMarker = L.marker([mapData.origin.lat, mapData.origin.lng], {icon: originIcon})
+            .addTo(map)
+            .bindPopup(`<strong>${mapData.origin.name}</strong><br>${mapData.origin.address}`);
+        
+        const destinationMarker = L.marker([mapData.destination.lat, mapData.destination.lng], {icon: destinationIcon})
+            .addTo(map)
+            .bindPopup(`<strong>${mapData.destination.name}</strong><br>${mapData.destination.address}`);
+        
+        // Adicionar paradas
+        const stopMarkers = [];
+        if (mapData.stops && mapData.stops.length > 0) {
+            mapData.stops.forEach(stop => {
+                const marker = L.marker([stop.lat, stop.lng], {icon: stopIcon})
+                    .addTo(map)
+                    .bindPopup(`<strong>${stop.name}</strong><br>${stop.description || ''}<br>Duração: ${stop.duration} min`);
+                stopMarkers.push(marker);
+            });
+        }
+        
+        // Criar linha da rota
+        const routePoints = [
+            [mapData.origin.lat, mapData.origin.lng],
+            ...(mapData.waypoints || []).map(wp => [wp.lat, wp.lng]),
+            [mapData.destination.lat, mapData.destination.lng]
+        ];
+        
+        const routeLine = L.polyline(routePoints, {
+            color: '#3388ff',
+            weight: 5,
+            opacity: 0.7
+        }).addTo(map);
+        
+        // Ajustar visualização para mostrar toda a rota
+        map.fitBounds(routeLine.getBounds(), {
+            padding: [50, 50]
+        });
+    });
+</script>
+{% endblock %}

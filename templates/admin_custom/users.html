@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciamento de Usuários - VanGo Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .admin-sidebar {
+        background-color: #212529;
+        color: white;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+    
+    .admin-sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.5rem 1rem;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    
+    .admin-sidebar .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .admin-sidebar .nav-link.active {
+        color: white;
+        background-color: #0d6efd;
+    }
+    
+    .admin-sidebar .nav-link i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .admin-content {
+        padding: 20px;
+    }
+    
+    .admin-header {
+        background-color: white;
+        padding: 15px 20px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 20px;
+    }
+    
+    .admin-user-dropdown {
+        cursor: pointer;
+    }
+    
+    .filter-card {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #6c757d;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .user-details {
+        margin-left: 10px;
+    }
+    
+    .user-name {
+        font-weight: bold;
+        margin-bottom: 0;
+    }
+    
+    .user-email {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <div class="text-center mb-4">
+                <h4>VanGo Admin</h4>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'admin_custom:users' %}">
+                        <i class="fas fa-users"></i> Usuários
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:routes' %}">
+                        <i class="fas fa-route"></i> Rotas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:bookings' %}">
+                        <i class="fas fa-ticket-alt"></i> Reservas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:payments' %}">
+                        <i class="fas fa-money-bill-wave"></i> Pagamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:reviews' %}">
+                        <i class="fas fa-star"></i> Avaliações
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:documents' %}">
+                        <i class="fas fa-file-alt"></i> Documentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:coupons' %}">
+                        <i class="fas fa-tag"></i> Cupons
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a class="nav-link" href="{% url 'admin:index' %}">
+                        <i class="fas fa-cog"></i> Admin Django
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:home' %}">
+                        <i class="fas fa-home"></i> Site Principal
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="admin-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Gerenciamento de Usuários</h4>
+                
+                <div class="admin-user-dropdown dropdown">
+                    <div class="d-flex align-items-center" id="adminUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="me-2">
+                            <div class="fw-bold">{{ request.user.get_full_name }}</div>
+                            <div class="text-muted small">Administrador</div>
+                        </div>
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminUserDropdown">
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> Meu Perfil</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}"><i class="fas fa-key me-2"></i> Alterar Senha</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Users Content -->
+            <div class="admin-content">
+                <!-- Filters -->
+                <div class="card filter-card">
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="userType" class="form-label">Tipo de Usuário</label>
+                                <select class="form-select" id="userType" name="user_type">
+                                    <option value="all" {% if user_type == 'all' %}selected{% endif %}>Todos</option>
+                                    <option value="passenger" {% if user_type == 'passenger' %}selected{% endif %}>Passageiros</option>
+                                    <option value="driver" {% if user_type == 'driver' %}selected{% endif %}>Motoristas</option>
+                                    <option value="staff" {% if user_type == 'staff' %}selected{% endif %}>Administradores</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="all" {% if status == 'all' %}selected{% endif %}>Todos</option>
+                                    <option value="active" {% if status == 'active' %}selected{% endif %}>Ativos</option>
+                                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inativos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="search" class="form-label">Buscar</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search" name="search" placeholder="Nome, email ou username" value="{{ search }}">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Tipo</th>
+                                <th>Data de Cadastro</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-avatar">
+                                                {% if user.profile_image %}
+                                                    <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="img-fluid">
+                                                {% else %}
+                                                    <i class="fas fa-user"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="user-details">
+                                                <p class="user-name">{{ user.get_full_name }}</p>
+                                                <p class="user-email">{{ user.email }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.is_staff %}
+                                            <span class="badge bg-danger">Administrador</span>
+                                        {% elif user.driverprofile %}
+                                            <span class="badge bg-primary">Motorista</span>
+                                        {% elif user.passengerprofile %}
+                                            <span class="badge bg-success">Passageiro</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Usuário</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Ativo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inativo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if user.is_active %}
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deactivateModal{{ user.id }}">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#activateModal{{ user.id }}">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Deactivate Modal -->
+                                        <div class="modal fade" id="deactivateModal{{ user.id }}" tabindex="-1" aria-labelledby="deactivateModalLabel{{ user.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deactivateModalLabel{{ user.id }}">Desativar Usuário</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Tem certeza que deseja desativar o usuário <strong>{{ user.get_full_name }}</strong>?</p>
+                                                        <p class="text-danger">Esta ação impedirá que o usuário faça login no sistema.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <form method="post">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                            <input type="hidden" name="action" value="deactivate">
+                                                            <button type="submit" class="btn btn-danger">Desativar</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Activate Modal -->
+                                        <div class="modal fade" id="activateModal{{ user.id }}" tabindex="-1" aria-labelledby="activateModalLabel{{ user.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="activateModalLabel{{ user.id }}">Ativar Usuário</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Tem certeza que deseja ativar o usuário <strong>{{ user.get_full_name }}</strong>?</p>
+                                                        <p class="text-success">Esta ação permitirá que o usuário faça login no sistema.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <form method="post">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                            <input type="hidden" name="action" value="activate">
+                                                            <button type="submit" class="btn btn-success">Ativar</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Nenhum usuário encontrado.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nav aria-label="Navegação de página">
+                        <ul class="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Próximo</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

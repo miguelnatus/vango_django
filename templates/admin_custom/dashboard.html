@@ -1,0 +1,661 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Administrativo - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stats-card {
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-card-primary {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .stats-card-success {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .stats-card-info {
+        background-color: #0dcaf0;
+        color: white;
+    }
+    
+    .stats-card-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .stats-card-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .stats-card-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .stats-card-light {
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+    
+    .stats-card-dark {
+        background-color: #212529;
+        color: white;
+    }
+    
+    .stats-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .stats-label {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+    
+    .admin-section {
+        margin-bottom: 30px;
+    }
+    
+    .admin-section-title {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .admin-sidebar {
+        background-color: #212529;
+        color: white;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+    
+    .admin-sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.5rem 1rem;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    
+    .admin-sidebar .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .admin-sidebar .nav-link.active {
+        color: white;
+        background-color: #0d6efd;
+    }
+    
+    .admin-sidebar .nav-link i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .admin-content {
+        padding: 20px;
+    }
+    
+    .admin-header {
+        background-color: white;
+        padding: 15px 20px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 20px;
+    }
+    
+    .admin-user-dropdown {
+        cursor: pointer;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <div class="text-center mb-4">
+                <h4>VanGo Admin</h4>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'admin_custom:dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:users' %}">
+                        <i class="fas fa-users"></i> Usuários
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:routes' %}">
+                        <i class="fas fa-route"></i> Rotas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:bookings' %}">
+                        <i class="fas fa-ticket-alt"></i> Reservas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:payments' %}">
+                        <i class="fas fa-money-bill-wave"></i> Pagamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:reviews' %}">
+                        <i class="fas fa-star"></i> Avaliações
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:documents' %}">
+                        <i class="fas fa-file-alt"></i> Documentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_custom:coupons' %}">
+                        <i class="fas fa-tag"></i> Cupons
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a class="nav-link" href="{% url 'admin:index' %}">
+                        <i class="fas fa-cog"></i> Admin Django
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:home' %}">
+                        <i class="fas fa-home"></i> Site Principal
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="admin-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Dashboard</h4>
+                
+                <div class="admin-user-dropdown dropdown">
+                    <div class="d-flex align-items-center" id="adminUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="me-2">
+                            <div class="fw-bold">{{ request.user.get_full_name }}</div>
+                            <div class="text-muted small">Administrador</div>
+                        </div>
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminUserDropdown">
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> Meu Perfil</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}"><i class="fas fa-key me-2"></i> Alterar Senha</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Dashboard Content -->
+            <div class="admin-content">
+                <!-- Stats Cards -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-primary text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stats-value">{{ total_users }}</div>
+                            <div class="stats-label">Usuários</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-success text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-route"></i>
+                            </div>
+                            <div class="stats-value">{{ total_routes }}</div>
+                            <div class="stats-label">Rotas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-info text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                            <div class="stats-value">{{ total_bookings }}</div>
+                            <div class="stats-label">Reservas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-warning text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stats-value">R$ {{ total_revenue }}</div>
+                            <div class="stats-label">Receita Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-danger text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="stats-value">{{ total_drivers }}</div>
+                            <div class="stats-label">Motoristas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-secondary text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="stats-value">{{ total_passengers }}</div>
+                            <div class="stats-label">Passageiros</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-light text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-shuttle-van"></i>
+                            </div>
+                            <div class="stats-value">{{ total_vehicles }}</div>
+                            <div class="stats-label">Veículos</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card stats-card-dark text-center">
+                            <div class="stats-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stats-value">R$ {{ avg_booking_value|floatformat:2 }}</div>
+                            <div class="stats-label">Valor Médio</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Reservas por Mês</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="bookingsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Receita por Mês</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Popular Routes -->
+                <div class="admin-section mt-4">
+                    <h5 class="admin-section-title">Rotas Mais Populares</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rota</th>
+                                    <th>Origem</th>
+                                    <th>Destino</th>
+                                    <th>Preço</th>
+                                    <th>Reservas</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for route in popular_routes %}
+                                    <tr>
+                                        <td>{{ route.title }}</td>
+                                        <td>{{ route.origin }}</td>
+                                        <td>{{ route.destination }}</td>
+                                        <td>R$ {{ route.price }}</td>
+                                        <td>{{ route.booking_count }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Nenhuma rota encontrada.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Active Drivers -->
+                <div class="admin-section mt-4">
+                    <h5 class="admin-section-title">Motoristas Mais Ativos</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Motorista</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Rotas</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for driver in active_drivers %}
+                                    <tr>
+                                        <td>{{ driver.user.get_full_name }}</td>
+                                        <td>{{ driver.user.email }}</td>
+                                        <td>{{ driver.phone_number }}</td>
+                                        <td>{{ driver.route_count }}</td>
+                                        <td>
+                                            {% if driver.is_verified %}
+                                                <span class="badge bg-success">Verificado</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pendente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Nenhum motorista encontrado.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recent Reviews -->
+                <div class="admin-section mt-4">
+                    <h5 class="admin-section-title">Avaliações Recentes</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Rota</th>
+                                    <th>Avaliação</th>
+                                    <th>Comentário</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for review in recent_reviews %}
+                                    <tr>
+                                        <td>{{ review.user.get_full_name }}</td>
+                                        <td>{{ review.route.title }}</td>
+                                        <td>
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>{{ review.comment|truncatechars:50 }}</td>
+                                        <td>{{ review.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Nenhuma avaliação encontrada.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Pending Documents -->
+                <div class="admin-section mt-4">
+                    <h5 class="admin-section-title">Documentos Pendentes</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Motorista</th>
+                                    <th>Tipo de Documento</th>
+                                    <th>Data de Envio</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in pending_documents %}
+                                    <tr>
+                                        <td>{{ document.driver.user.get_full_name }}</td>
+                                        <td>{{ document.get_document_type_display }}</td>
+                                        <td>{{ document.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">Pendente</span>
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ document.id }}">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ document.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Approve Modal -->
+                                    <div class="modal fade" id="approveModal{{ document.id }}" tabindex="-1" aria-labelledby="approveModalLabel{{ document.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="approveModalLabel{{ document.id }}">Aprovar Documento</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Tem certeza que deseja aprovar o documento <strong>{{ document.get_document_type_display }}</strong> do motorista <strong>{{ document.driver.user.get_full_name }}</strong>?</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <form method="post" action="{% url 'admin_custom:documents' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="document_id" value="{{ document.id }}">
+                                                        <input type="hidden" name="action" value="approve">
+                                                        <button type="submit" class="btn btn-success">Aprovar</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Reject Modal -->
+                                    <div class="modal fade" id="rejectModal{{ document.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ document.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="rejectModalLabel{{ document.id }}">Rejeitar Documento</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'admin_custom:documents' %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <p>Tem certeza que deseja rejeitar o documento <strong>{{ document.get_document_type_display }}</strong> do motorista <strong>{{ document.driver.user.get_full_name }}</strong>?</p>
+                                                        
+                                                        <div class="mb-3">
+                                                            <label for="rejectionReason{{ document.id }}" class="form-label">Motivo da Rejeição</label>
+                                                            <textarea class="form-control" id="rejectionReason{{ document.id }}" name="rejection_reason" rows="3" required></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <input type="hidden" name="document_id" value="{{ document.id }}">
+                                                        <input type="hidden" name="action" value="reject">
+                                                        <button type="submit" class="btn btn-danger">Rejeitar</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">Nenhum documento pendente.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados de exemplo para os gráficos
+        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        
+        // Gráfico de Reservas
+        const bookingsData = {
+            labels: months,
+            datasets: [{
+                label: 'Reservas',
+                data: [65, 59, 80, 81, 56, 55, 40, 45, 60, 70, 85, 90],
+                backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        };
+        
+        const bookingsConfig = {
+            type: 'line',
+            data: bookingsData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+        
+        new Chart(
+            document.getElementById('bookingsChart'),
+            bookingsConfig
+        );
+        
+        // Gráfico de Receita
+        const revenueData = {
+            labels: months,
+            datasets: [{
+                label: 'Receita (R$)',
+                data: [12500, 19000, 15000, 16500, 14000, 18000, 22000, 24000, 21000, 20000, 25000, 30000],
+                backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                borderColor: 'rgba(25, 135, 84, 1)',
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        };
+        
+        const revenueConfig = {
+            type: 'line',
+            data: revenueData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+        
+        new Chart(
+            document.getElementById('revenueChart'),
+            revenueConfig
+        );
+    });
+</script>
+{% endblock %}

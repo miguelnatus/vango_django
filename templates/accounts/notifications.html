@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Notificações - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-3">
+            {% include 'accounts/partials/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Minhas Notificações</h5>
+                    <a href="{% url 'accounts:notification_settings' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-cog"></i> Configurações
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if notifications %}
+                        <div class="list-group">
+                            {% for notification in notifications %}
+                                <div class="list-group-item list-group-item-action {% if not notification.read %}bg-light{% endif %}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ notification.title }}</h6>
+                                        <small>{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ notification.message }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">
+                                            {% if notification.notification_type == 'booking_created' %}
+                                                <span class="badge bg-primary">Nova Reserva</span>
+                                            {% elif notification.notification_type == 'booking_confirmed' %}
+                                                <span class="badge bg-success">Reserva Confirmada</span>
+                                            {% elif notification.notification_type == 'booking_cancelled' %}
+                                                <span class="badge bg-danger">Reserva Cancelada</span>
+                                            {% elif notification.notification_type == 'route_created' %}
+                                                <span class="badge bg-info">Nova Rota</span>
+                                            {% elif notification.notification_type == 'document_verified' %}
+                                                <span class="badge bg-success">Documento Verificado</span>
+                                            {% elif notification.notification_type == 'document_rejected' %}
+                                                <span class="badge bg-warning">Documento Rejeitado</span>
+                                            {% elif notification.notification_type == 'review_received' %}
+                                                <span class="badge bg-info">Nova Avaliação</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sistema</span>
+                                            {% endif %}
+                                        </small>
+                                        {% if not notification.read %}
+                                            <form method="post" action="{% url 'accounts:mark_notification_read' notification.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary">Marcar como lida</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if is_paginated %}
+                            <nav aria-label="Paginação de notificações" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1">&laquo; Primeira</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">
+                                            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                        </span>
+                                    </li>
+                                    
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                            <h5>Nenhuma notificação</h5>
+                            <p class="text-muted">Você não tem notificações no momento.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

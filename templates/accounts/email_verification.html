@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Verificação de E-mail - VanGo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center">
+                    <h5 class="mb-0">Verificação de E-mail</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.email_verified %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h5>E-mail Verificado</h5>
+                            <p class="text-muted">Seu e-mail já foi verificado com sucesso.</p>
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-primary mt-3">Voltar ao Perfil</a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-envelope fa-4x text-primary mb-3"></i>
+                            <h5>Verifique seu E-mail</h5>
+                            <p class="text-muted">
+                                Enviamos um e-mail de verificação para <strong>{{ user.email }}</strong>. 
+                                Por favor, verifique sua caixa de entrada e clique no link de verificação.
+                            </p>
+                            <p class="text-muted small">
+                                Não recebeu o e-mail? Verifique sua pasta de spam ou solicite um novo e-mail de verificação.
+                            </p>
+                            <form method="post" action="{% url 'accounts:email_verification_send' %}" class="mt-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">Reenviar E-mail de Verificação</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

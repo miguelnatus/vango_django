@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmação de Pagamento - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-confirmation {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .payment-icon {
+        font-size: 64px;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+    
+    .payment-status {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .payment-message {
+        font-size: 18px;
+        color: #6c757d;
+        margin-bottom: 30px;
+    }
+    
+    .payment-details {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: left;
+    }
+    
+    .payment-detail-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .payment-detail-total {
+        font-weight: bold;
+        font-size: 1.2rem;
+        border-top: 1px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    .pix-qr-code {
+        max-width: 200px;
+        margin: 0 auto 20px;
+    }
+    
+    .bank-slip-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="payment-confirmation">
+                        {% if payment.status == 'approved' %}
+                            <div class="payment-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="payment-status text-success">Pagamento Aprovado</div>
+                            <div class="payment-message">
+                                Seu pagamento foi processado com sucesso. Sua reserva está confirmada!
+                            </div>
+                        {% elif payment.status == 'pending' %}
+                            <div class="payment-icon text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="payment-status text-warning">Pagamento Pendente</div>
+                            <div class="payment-message">
+                                Seu pagamento está sendo processado. Assim que confirmado, sua reserva será atualizada.
+                            </div>
+                        {% elif payment.status == 'processing' %}
+                            <div class="payment-icon text-primary">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <div class="payment-status text-primary">Processando Pagamento</div>
+                            <div class="payment-message">
+                                Estamos processando seu pagamento. Isso pode levar alguns instantes.
+                            </div>
+                        {% else %}
+                            <div class="payment-icon text-danger">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="payment-status text-danger">Pagamento não Concluído</div>
+                            <div class="payment-message">
+                                Houve um problema com seu pagamento. Por favor, tente novamente.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="payment-details">
+                            <h5 class="mb-3">Detalhes do Pagamento</h5>
+                            
+                            <div class="payment-detail-item">
+                                <span>Código da Reserva:</span>
+                                <span>#{{ booking.id }}</span>
+                            </div>
+                            
+                            <div class="payment-detail-item">
+                                <span>Rota:</span>
+                                <span>{{ booking.route.title }}</span>
+                            </div>
+                            
+                            <div class="payment-detail-item">
+                                <span>Data:</span>
+                                <span>{{ booking.date|date:"d/m/Y" }}</span>
+                            </div>
+                            
+                            <div class="payment-detail-item">
+                                <span>Método de Pagamento:</span>
+                                <span>
+                                    {% if payment.payment_method == 'credit_card' %}
+                                        Cartão de Crédito ({{ payment.card_brand }} •••• {{ payment.card_last_digits }})
+                                    {% elif payment.payment_method == 'debit_card' %}
+                                        Cartão de Débito ({{ payment.card_brand }} •••• {{ payment.card_last_digits }})
+                                    {% elif payment.payment_method == 'pix' %}
+                                        PIX
+                                    {% elif payment.payment_method == 'bank_slip' %}
+                                        Boleto Bancário
+                                    {% else %}
+                                        {{ payment.payment_method }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="payment-detail-item">
+                                <span>Status:</span>
+                                <span>
+                                    {% if payment.status == 'approved' %}
+                                        <span class="badge bg-success">Aprovado</span>
+                                    {% elif payment.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pendente</span>
+                                    {% elif payment.status == 'processing' %}
+                                        <span class="badge bg-primary">Processando</span>
+                                    {% elif payment.status == 'declined' %}
+                                        <span class="badge bg-danger">Recusado</span>
+                                    {% elif payment.status == 'refunded' %}
+                                        <span class="badge bg-secondary">Reembolsado</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ payment.status }}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="payment-detail-item">
+                                <span>Data do Pagamento:</span>
+                                <span>
+                                    {% if payment.payment_date %}
+                                        {{ payment.payment_date|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="payment-detail-total">
+                                <span>Valor Total:</span>
+                                <span>R$ {{ payment.amount }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if payment.payment_method == 'pix' and payment.status == 'pending' %}
+                            <div class="pix-info">
+                                <h5 class="mb-3">Pague com PIX</h5>
+                                <p class="text-muted mb-3">Escaneie o QR Code abaixo com o aplicativo do seu banco para realizar o pagamento.</p>
+                                
+                                <div class="pix-qr-code">
+                                    <img src="data:image/png;base64,{{ payment.pix_qr_code_image }}" alt="QR Code PIX" class="img-fluid">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <p class="mb-1"><strong>Código PIX:</strong></p>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="{{ payment.pix_qr_code }}" id="pix-code" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" id="copy-pix-code">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Este QR Code é válido até {{ payment.pix_expiration|date:"d/m/Y H:i" }}.
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if payment.payment_method == 'bank_slip' and payment.status == 'pending' %}
+                            <div class="bank-slip-info">
+                                <h5 class="mb-3">Boleto Bancário</h5>
+                                <p class="text-muted mb-3">Utilize o link abaixo para visualizar e imprimir seu boleto.</p>
+                                
+                                <a href="{{ payment.bank_slip_url }}" target="_blank" class="btn btn-primary mb-3">
+                                    <i class="fas fa-print me-2"></i> Visualizar/Imprimir Boleto
+                                </a>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Este boleto vence em {{ payment.bank_slip_expiration|date:"d/m/Y" }}.
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'bookings:detail' booking.id %}" class="btn btn-primary">
+                                <i class="fas fa-info-circle me-2"></i> Detalhes da Reserva
+                            </a>
+                            
+                            <a href="{% url 'core:home' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="fas fa-home me-2"></i> Página Inicial
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if payment.payment_method == 'pix' and payment.status == 'pending' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyPixCodeBtn = document.getElementById('copy-pix-code');
+        const pixCodeInput = document.getElementById('pix-code');
+        
+        if (copyPixCodeBtn) {
+            copyPixCodeBtn.addEventListener('click', function() {
+                pixCodeInput.select();
+                document.execCommand('copy');
+                
+                // Mudar texto do botão temporariamente
+                const originalHTML = copyPixCodeBtn.innerHTML;
+                copyPixCodeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                
+                setTimeout(function() {
+                    copyPixCodeBtn.innerHTML = originalHTML;
+                }, 2000);
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Rota - VanGo{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<style>
+    #route-create-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .map-instructions {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .map-instructions ol {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+    .coordinates-display {
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Criar Nova Rota</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h6>Informações Básicas</h6>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.title.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.description.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.cover_image.id_for_label }}" class="form-label">{{ form.cover_image.label }}</label>
+                                {{ form.cover_image }}
+                                {% if form.cover_image.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.cover_image.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Imagem de capa para a rota. Recomendado: 1200x600px.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Mapa da Rota</h6>
+                            
+                            <div class="map-instructions">
+                                <p class="mb-2"><strong>Instruções:</strong></p>
+                                <ol>
+                                    <li>Clique no mapa para definir o ponto de origem</li>
+                                    <li>Clique novamente para definir o ponto de destino</li>
+                                    <li>Clique em pontos intermediários para adicionar waypoints (opcional)</li>
+                                    <li>Arraste os marcadores para ajustar as posições</li>
+                                </ol>
+                            </div>
+                            
+                            <div id="route-create-map"></div>
+                            
+                            <input type="hidden" id="waypoints-json" name="waypoints_json" value="[]">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.origin_name.id_for_label }}" class="form-label">{{ form.origin_name.label }}</label>
+                                    {{ form.origin_name }}
+                                    {% if form.origin_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.origin_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.origin_address.id_for_label }}" class="form-label">{{ form.origin_address.label }}</label>
+                                    {{ form.origin_address }}
+                                    {% if form.origin_address.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.origin_address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Coordenadas de Origem</label>
+                                    <div class="coordinates-display">
+                                        Lat: <span id="origin-lat">-</span>, Lng: <span id="origin-lng">-</span>
+                                    </div>
+                                    {{ form.origin_latitude }}
+                                    {{ form.origin_longitude }}
+                                    {% if form.origin_latitude.errors or form.origin_longitude.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            Selecione um ponto de origem válido no mapa.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.destination_name.id_for_label }}" class="form-label">{{ form.destination_name.label }}</label>
+                                    {{ form.destination_name }}
+                                    {% if form.destination_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.destination_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.destination_address.id_for_label }}" class="form-label">{{ form.destination_address.label }}</label>
+                                    {{ form.destination_address }}
+                                    {% if form.destination_address.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.destination_address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Coordenadas de Destino</label>
+                                    <div class="coordinates-display">
+                                        Lat: <span id="destination-lat">-</span>, Lng: <span id="destination-lng">-</span>
+                                    </div>
+                                    {{ form.destination_latitude }}
+                                    {{ form.destination_longitude }}
+                                    {% if form.destination_latitude.errors or form.destination_longitude.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            Selecione um ponto de destino válido no mapa.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.distance_km.id_for_label }}" class="form-label">{{ form.distance_km.label }}</label>
+                                    {{ form.distance_km }}
+                                    {% if form.distance_km.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.distance_km.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.duration_minutes.id_for_label }}" class="form-label">{{ form.duration_minutes.label }}</label>
+                                    {{ form.duration_minutes }}
+                                    {% if form.duration_minutes.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.duration_minutes.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Informações de Preço e Capacidade</h6>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.price.id_for_label }}" class="form-label">{{ form.price.label }}</label>
+                                    {{ form.price }}
+                                    {% if form.price.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.max_passengers.id_for_label }}" class="form-label">{{ form.max_passengers.label }}</label>
+                                    {{ form.max_passengers }}
+                                    {% if form.max_passengers.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.max_passengers.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Disponibilidade</h6>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="{{ form.available_days.id_for_label }}" class="form-label">{{ form.available_days.label }}</label>
+                                    <div>
+                                        {{ form.available_days }}
+                                    </div>
+                                    {% if form.available_days.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.available_days.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.departure_time.id_for_label }}" class="form-label">{{ form.departure_time.label }}</label>
+                                    {{ form.departure_time }}
+                                    {% if form.departure_time.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.departure_time.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.return_time.id_for_label }}" class="form-label">{{ form.return_time.label }}</label>
+                                    {{ form.return_time }}
+                                    {% if form.return_time.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.return_time.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Comodidades</h6>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.has_wifi }}
+                                        <label class="form-check-label" for="{{ form.has_wifi.id_for_label }}">
+                                            {{ form.has_wifi.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.has_air_conditioning }}
+                                        <label class="form-check-label" for="{{ form.has_air_conditioning.id_for_label }}">
+                                            {{ form.has_air_conditioning.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.has_bathroom }}
+                                        <label class="form-check-label" for="{{ form.has_bathroom.id_for_label }}">
+                                            {{ form.has_bathroom.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.has_usb_outlets }}
+                                        <label class="form-check-label" for="{{ form.has_usb_outlets.id_for_label }}">
+                                            {{ form.has_usb_outlets.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.is_accessible }}
+                                        <label class="form-check-label" for="{{ form.is_accessible.id_for_label }}">
+                                            {{ form.is_accessible.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        {{ form.allows_pets }}
+                                        <label class="form-check-label" for="{{ form.allows_pets.id_for_label }}">
+                                            {{ form.allows_pets.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Salvar Rota
+                            </button>
+                            <a href="{% url 'routes:driver_routes' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar mapa
+        const map = L.map('route-create-map').setView([-30.0277, -51.2287], 12); // Porto Alegre como centro inicial
+        
+        // Adicionar camada de mapa
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Marcadores personalizados
+        const originIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        
+        const destinationIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #F44336; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        
+        const waypointIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #2196F3; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+        
+        // Variáveis para armazenar os marcadores
+        let originMarker = null;
+        let destinationMarker = null;
+        let waypointMarkers = [];
+        let routeLine = null;
+        
+        // Campos de formulário
+        const originLatField = document.getElementById('{{ form.origin_latitude.id_for_label }}');
+        const originLngField = document.getElementById('{{ form.origin_longitude.id_for_label }}');
+        const destLatField = document.getElementById('{{ form.destination_latitude.id_for_label }}');
+        const destLngField = document.getElementById('{{ form.destination_longitude.id_for_label }}');
+        const waypointsJsonField = document.getElementById('waypoints-json');
+        
+        // Elementos de exibição
+        const originLatDisplay = document.getElementById('origin-lat');
+        const originLngDisplay = document.getElementById('origin-lng');
+        const destLatDisplay = document.getElementById('destination-lat');
+        const destLngDisplay = document.getElementById('destination-lng');
+        
+        // Função para atualizar a linha da rota
+        function updateRouteLine() {
+            if (routeLine) {
+                map.removeLayer(routeLine);
+            }
+            
+            if (originMarker && destinationMarker) {
+                const points = [
+                    originMarker.getLatLng(),
+                    ...waypointMarkers.map(marker => marker.getLatLng()),
+                    destinationMarker.getLatLng()
+                ];
+                
+                routeLine = L.polyline(points, {
+                    color: '#3388ff',
+                    weight: 4,
+                    opacity: 0.7
+                }).addTo(map);
+                
+                // Ajustar visualização para mostrar toda a rota
+                map.fitBounds(routeLine.getBounds(), {
+                    padding: [50, 50]
+                });
+            }
+        }
+        
+        // Função para atualizar o JSON de waypoints
+        function updateWaypointsJson() {
+            const waypoints = waypointMarkers.map(marker => {
+                const latlng = marker.getLatLng();
+                return {
+                    lat: latlng.lat,
+                    lng: latlng.lng
+                };
+            });
+            
+            waypointsJsonField.value = JSON.stringify(waypoints);
+        }
+        
+        // Manipulador de clique no mapa
+        map.on('click', function(e) {
+            if (!originMarker) {
+                // Definir origem
+                originMarker = L.marker(e.latlng, {
+                    icon: originIcon,
+                    draggable: true
+                }).addTo(map);
+                
+                // Atualizar campos de formulário
+                originLatField.value = e.latlng.lat.toFixed(7);
+                originLngField.value = e.latlng.lng.toFixed(7);
+                originLatDisplay.textContent = e.latlng.lat.toFixed(7);
+                originLngDisplay.textContent = e.latlng.lng.toFixed(7);
+                
+                // Manipulador de arrasto
+                originMarker.on('dragend', function() {
+                    const latlng = originMarker.getLatLng();
+                    originLatField.value = latlng.lat.toFixed(7);
+                    originLngField.value = latlng.lng.toFixed(7);
+                    originLatDisplay.textContent = latlng.lat.toFixed(7);
+                    originLngDisplay.textContent = latlng.lng.toFixed(7);
+                    updateRouteLine();
+                });
+            } else if (!destinationMarker) {
+                // Definir destino
+                destinationMarker = L.marker(e.latlng, {
+                    icon: destinationIcon,
+                    draggable: true
+                }).addTo(map);
+                
+                // Atualizar campos de formulário
+                destLatField.value = e.latlng.lat.toFixed(7);
+                destLngField.value = e.latlng.lng.toFixed(7);
+                destLatDisplay.textContent = e.latlng.lat.toFixed(7);
+                destLngDisplay.textContent = e.latlng.lng.toFixed(7);
+                
+                // Manipulador de arrasto
+                destinationMarker.on('dragend', function() {
+                    const latlng = destinationMarker.getLatLng();
+                    destLatField.value = latlng.lat.toFixed(7);
+                    destLngField.value = latlng.lng.toFixed(7);
+                    destLatDisplay.textContent = latlng.lat.toFixed(7);
+                    destLngDisplay.textContent = latlng.lng.toFixed(7);
+                    updateRouteLine();
+                });
+                
+                // Desenhar linha da rota
+                updateRouteLine();
+            } else {
+                // Adicionar waypoint
+                const waypointMarker = L.marker(e.latlng, {
+                    icon: waypointIcon,
+                    draggable: true
+                }).addTo(map);
+                
+                // Manipulador de arrasto
+                waypointMarker.on('dragend', function() {
+                    updateRouteLine();
+                    updateWaypointsJson();
+                });
+                
+                // Manipulador de clique (para remover)
+                waypointMarker.on('click', function() {
+                    map.removeLayer(waypointMarker);
+                    waypointMarkers = waypointMarkers.filter(m => m !== waypointMarker);
+                    updateRouteLine();
+                    updateWaypointsJson();
+                    return false; // Evitar propagação do evento
+                });
+                
+                waypointMarkers.push(waypointMarker);
+                updateRouteLine();
+                updateWaypointsJson();
+            }
+        });
+        
+        // Pré-preencher o mapa se houver valores existentes
+        if (originLatField.value && originLngField.value) {
+            const lat = parseFloat(originLatField.value);
+            const lng = parseFloat(originLngField.value);
+            
+            originMarker = L.marker([lat, lng], {
+                icon: originIcon,
+                draggable: true
+            }).addTo(map);
+            
+            originLatDisplay.textContent = lat.toFixed(7);
+            originLngDisplay.textContent = lng.toFixed(7);
+            
+            originMarker.on('dragend', function() {
+                const latlng = originMarker.getLatLng();
+                originLatField.value = latlng.lat.toFixed(7);
+                originLngField.value = latlng.lng.toFixed(7);
+                originLatDisplay.textContent = latlng.lat.toFixed(7);
+                originLngDisplay.textContent = latlng.lng.toFixed(7);
+                updateRouteLine();
+            });
+        }
+        
+        if (destLatField.value && destLngField.value) {
+            const lat = parseFloat(destLatField.value);
+            const lng = parseFloat(destLngField.value);
+            
+            destinationMarker = L.marker([lat, lng], {
+                icon: destinationIcon,
+                draggable: true
+            }).addTo(map);
+            
+            destLatDisplay.textContent = lat.toFixed(7);
+            destLngDisplay.textContent = lng.toFixed(7);
+            
+            destinationMarker.on('dragend', function() {
+                const latlng = destinationMarker.getLatLng();
+                destLatField.value = latlng.lat.toFixed(7);
+                destLngField.value = latlng.lng.toFixed(7);
+                destLatDisplay.textContent = latlng.lat.toFixed(7);
+                destLngDisplay.textContent = latlng.lng.toFixed(7);
+                updateRouteLine();
+            });
+        }
+        
+        // Carregar waypoints existentes
+        try {
+            const waypoints = JSON.parse(waypointsJsonField.value || '[]');
+            
+            waypoints.forEach(wp => {
+                const waypointMarker = L.marker([wp.lat, wp.lng], {
+                    icon: waypointIcon,
+                    draggable: true
+                }).addTo(map);
+                
+                waypointMarker.on('dragend', function() {
+                    updateRouteLine();
+                    updateWaypointsJson();
+                });
+                
+                waypointMarker.on('click', function() {
+                    map.removeLayer(waypointMarker);
+                    waypointMarkers = waypointMarkers.filter(m => m !== waypointMarker);
+                    updateRouteLine();
+                    updateWaypointsJson();
+                    return false;
+                });
+                
+                waypointMarkers.push(waypointMarker);
+            });
+        } catch (e) {
+            console.error('Erro ao carregar waypoints:', e);
+        }
+        
+        // Atualizar linha da rota se origem e destino existirem
+        if (originMarker && destinationMarker) {
+            updateRouteLine();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% include 'accounts/partials/sidebar_links.html' with active='sidebar_notifications' %}
+
+<div class="list-group mb-4">
+    <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_profile' %}active{% endif %}">
+        <i class="fas fa-user fa-fw me-2"></i> Meu Perfil
+    </a>
+    <a href="{% url 'accounts:passenger_dashboard' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt fa-fw me-2"></i> Dashboard
+    </a>
+    <a href="{% url 'bookings:list' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_bookings' %}active{% endif %}">
+        <i class="fas fa-ticket-alt fa-fw me-2"></i> Minhas Reservas
+    </a>
+    <a href="{% url 'accounts:notifications' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_notifications' %}active{% endif %}">
+        <i class="fas fa-bell fa-fw me-2"></i> Notificações
+        {% if unread_notifications_count %}
+            <span class="badge bg-danger rounded-pill float-end">{{ unread_notifications_count }}</span>
+        {% endif %}
+    </a>
+    {% if user.is_driver %}
+        <a href="{% url 'routes:driver_routes' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_routes' %}active{% endif %}">
+            <i class="fas fa-route fa-fw me-2"></i> Minhas Rotas
+        </a>
+        <a href="{% url 'vehicles:list' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_vehicles' %}active{% endif %}">
+            <i class="fas fa-shuttle-van fa-fw me-2"></i> Meus Veículos
+        </a>
+        <a href="{% url 'accounts:driver_documents' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_documents' %}active{% endif %}">
+            <i class="fas fa-file-alt fa-fw me-2"></i> Documentos
+        </a>
+    {% endif %}
+    <a href="{% url 'accounts:profile_edit' %}" class="list-group-item list-group-item-action {% if active == 'sidebar_settings' %}active{% endif %}">
+        <i class="fas fa-cog fa-fw me-2"></i> Configurações
+    </a>
+</div>

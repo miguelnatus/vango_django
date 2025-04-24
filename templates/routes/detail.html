@@ -1,10 +1,421 @@
 {% extends 'base.html' %}
 
-{% block title %}Detalhes da Rota - VanGo{% endblock %}
+{% block title %}{{ route.title }} - VanGo{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<style>
+    .route-map-container {
+        position: relative;
+    }
+    #route-detail-map {
+        height: 300px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .route-info-card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .route-cover-img {
+        height: 200px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .route-attributes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .route-attribute {
+        background-color: #f8f9fa;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    .route-attribute i {
+        margin-right: 5px;
+        color: #0d6efd;
+    }
+    .booking-card {
+        position: sticky;
+        top: 20px;
+    }
+    .route-stops-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .route-stops-timeline::before {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    .timeline-point {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 2px solid #0d6efd;
+        z-index: 1;
+    }
+    .timeline-point.origin {
+        background-color: #4CAF50;
+        border-color: #4CAF50;
+    }
+    .timeline-point.destination {
+        background-color: #F44336;
+        border-color: #F44336;
+    }
+    .timeline-point.stop {
+        background-color: #2196F3;
+        border-color: #2196F3;
+    }
+    .timeline-content {
+        padding-bottom: 20px;
+    }
+    .view-full-map-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background-color: white;
+        border: none;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <h2 class="mb-4">Detalhes da Rota</h2>
-    <p class="text-muted">Esta página será implementada em breve.</p>
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Mapa da rota -->
+            <div class="route-map-container mb-4">
+                <div id="route-detail-map"></div>
+                <a href="{% url 'routes:map' route.id %}" class="btn btn-sm btn-light view-full-map-btn">
+                    <i class="fas fa-expand-alt"></i> Ver mapa completo
+                </a>
+            </div>
+            
+            <!-- Informações da rota -->
+            <div class="card shadow-sm route-info-card mb-4">
+                {% if route.cover_image %}
+                    <img src="{{ route.cover_image.url }}" alt="{{ route.title }}" class="route-cover-img">
+                {% endif %}
+                
+                <div class="card-body">
+                    <h3 class="card-title">{{ route.title }}</h3>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <span class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= route.average_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif forloop.counter <= route.average_rating|add:"0.5" %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="text-muted ms-1">{{ route.average_rating|floatformat:1 }}</span>
+                        </div>
+                        <div class="text-muted">
+                            <i class="fas fa-comment"></i> {{ route.reviews_count }} avaliações
+                        </div>
+                    </div>
+                    
+                    <p class="card-text">{{ route.description }}</p>
+                    
+                    <div class="route-attributes">
+                        {% if route.has_wifi %}
+                            <span class="route-attribute"><i class="fas fa-wifi"></i> Wi-Fi</span>
+                        {% endif %}
+                        {% if route.has_air_conditioning %}
+                            <span class="route-attribute"><i class="fas fa-snowflake"></i> Ar Condicionado</span>
+                        {% endif %}
+                        {% if route.has_bathroom %}
+                            <span class="route-attribute"><i class="fas fa-toilet"></i> Banheiro</span>
+                        {% endif %}
+                        {% if route.has_usb_outlets %}
+                            <span class="route-attribute"><i class="fas fa-plug"></i> Tomadas USB</span>
+                        {% endif %}
+                        {% if route.is_accessible %}
+                            <span class="route-attribute"><i class="fas fa-wheelchair"></i> Acessível</span>
+                        {% endif %}
+                        {% if route.allows_pets %}
+                            <span class="route-attribute"><i class="fas fa-paw"></i> Permite Pets</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-road fa-2x text-primary me-3"></i>
+                                <div>
+                                    <div class="text-muted small">Distância</div>
+                                    <div class="fw-bold">{{ route.distance_km }} km</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock fa-2x text-primary me-3"></i>
+                                <div>
+                                    <div class="text-muted small">Duração</div>
+                                    <div class="fw-bold">{{ route.duration_minutes }} minutos</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users fa-2x text-primary me-3"></i>
+                                <div>
+                                    <div class="text-muted small">Capacidade</div>
+                                    <div class="fw-bold">{{ route.max_passengers }} passageiros</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3">Itinerário</h5>
+                    <div class="route-stops-timeline">
+                        <!-- Origem -->
+                        <div class="timeline-point origin" style="top: 0;"></div>
+                        <div class="timeline-content">
+                            <h6>{{ route.origin_name }}</h6>
+                            <p class="text-muted mb-0">{{ route.origin_address }}</p>
+                            <p class="text-muted small mb-0">Horário de partida: {{ route.departure_time|time:"H:i" }}</p>
+                        </div>
+                        
+                        <!-- Paradas -->
+                        {% for stop in stops %}
+                            <div class="timeline-point stop" style="top: {{ forloop.counter|add:"1" }}00px;"></div>
+                            <div class="timeline-content">
+                                <h6>{{ stop.name }}</h6>
+                                <p class="text-muted mb-0">{{ stop.address }}</p>
+                                <p class="text-muted small mb-0">Parada de {{ stop.duration_minutes }} minutos</p>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Destino -->
+                        <div class="timeline-point destination" style="bottom: 0;"></div>
+                        <div class="timeline-content">
+                            <h6>{{ route.destination_name }}</h6>
+                            <p class="text-muted mb-0">{{ route.destination_address }}</p>
+                            {% if route.return_time %}
+                                <p class="text-muted small mb-0">Horário de retorno: {{ route.return_time|time:"H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Avaliações -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Avaliações</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver todas</a>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        {% for review in reviews %}
+                            <div class="d-flex mb-4 {% if not forloop.last %}border-bottom pb-4{% endif %}">
+                                <div class="flex-shrink-0">
+                                    {% if review.user.profile_picture %}
+                                        <img src="{{ review.user.profile_picture.url }}" alt="{{ review.user.get_full_name }}" class="rounded-circle" width="50" height="50">
+                                    {% else %}
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            {{ review.user.first_name|first }}{{ review.user.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0">{{ review.user.get_full_name }}</h6>
+                                        <span class="text-muted small">{{ review.created_at|date:"d/m/Y" }}</span>
+                                    </div>
+                                    <div class="text-warning mb-2">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="far fa-comment-alt fa-3x text-muted mb-3"></i>
+                            <h5>Nenhuma avaliação</h5>
+                            <p class="text-muted">Seja o primeiro a avaliar esta rota!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Card de reserva -->
+            <div class="card shadow-sm booking-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Reservar</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">R$ {{ route.price }}</h4>
+                        <span class="badge bg-success">{{ route.available_seats }} lugares disponíveis</span>
+                    </div>
+                    
+                    <form method="get" action="{% url 'bookings:create' route.id %}">
+                        <div class="mb-3">
+                            <label for="booking-date" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="booking-date" name="date" required>
+                            <div class="form-text">
+                                Disponível em: 
+                                {% for day in route.available_days %}
+                                    {% if day == 0 %}Seg{% elif day == 1 %}Ter{% elif day == 2 %}Qua{% elif day == 3 %}Qui{% elif day == 4 %}Sex{% elif day == 5 %}Sáb{% elif day == 6 %}Dom{% endif %}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="booking-passengers" class="form-label">Número de passageiros</label>
+                            <select class="form-select" id="booking-passengers" name="passengers" required>
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= route.available_seats %}
+                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-ticket-alt me-2"></i> Reservar Agora
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary">
+                                <i class="far fa-heart me-2"></i> Adicionar aos Favoritos
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex align-items-center">
+                        {% if route.driver.profile_picture %}
+                            <img src="{{ route.driver.profile_picture.url }}" alt="{{ route.driver.get_full_name }}" class="rounded-circle me-3" width="40" height="40">
+                        {% else %}
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                {{ route.driver.first_name|first }}{{ route.driver.last_name|first }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ route.driver.get_full_name }}</h6>
+                            <p class="text-muted small mb-0">Motorista</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados da rota
+        const mapData = {{ map_data|safe }};
+        
+        // Inicializar mapa
+        const map = L.map('route-detail-map', {
+            zoomControl: false,
+            scrollWheelZoom: false
+        });
+        
+        // Adicionar camada de mapa
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Adicionar controles de zoom em posição diferente
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
+        
+        // Marcadores personalizados
+        const originIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #4CAF50; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+        
+        const destinationIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #F44336; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+        
+        const stopIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #2196F3; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+        
+        // Adicionar marcadores
+        const originMarker = L.marker([mapData.origin.lat, mapData.origin.lng], {icon: originIcon})
+            .addTo(map)
+            .bindPopup(`<strong>${mapData.origin.name}</strong><br>${mapData.origin.address}`);
+        
+        const destinationMarker = L.marker([mapData.destination.lat, mapData.destination.lng], {icon: destinationIcon})
+            .addTo(map)
+            .bindPopup(`<strong>${mapData.destination.name}</strong><br>${mapData.destination.address}`);
+        
+        // Adicionar paradas
+        if (mapData.stops && mapData.stops.length > 0) {
+            mapData.stops.forEach(stop => {
+                L.marker([stop.lat, stop.lng], {icon: stopIcon})
+                    .addTo(map)
+                    .bindPopup(`<strong>${stop.name}</strong><br>${stop.description || ''}`);
+            });
+        }
+        
+        // Criar linha da rota
+        const routePoints = [
+            [mapData.origin.lat, mapData.origin.lng],
+            ...(mapData.waypoints || []).map(wp => [wp.lat, wp.lng]),
+            [mapData.destination.lat, mapData.destination.lng]
+        ];
+        
+        const routeLine = L.polyline(routePoints, {
+            color: '#3388ff',
+            weight: 4,
+            opacity: 0.7
+        }).addTo(map);
+        
+        // Ajustar visualização para mostrar toda a rota
+        map.fitBounds(routeLine.getBounds(), {
+            padding: [30, 30]
+        });
+    });
+</script>
 {% endblock %}

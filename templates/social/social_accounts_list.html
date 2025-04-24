@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}Contas de Redes Sociais - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .social-account-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.2s ease;
+    }
+    
+    .social-account-card:hover {
+        border-color: #adb5bd;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .social-account-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .social-account-icon {
+        font-size: 24px;
+        margin-right: 15px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .facebook-icon {
+        background-color: #3b5998;
+        color: white;
+    }
+    
+    .twitter-icon {
+        background-color: #1da1f2;
+        color: white;
+    }
+    
+    .google-icon {
+        background-color: #db4437;
+        color: white;
+    }
+    
+    .instagram-icon {
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: white;
+    }
+    
+    .linkedin-icon {
+        background-color: #0077b5;
+        color: white;
+    }
+    
+    .apple-icon {
+        background-color: #000000;
+        color: white;
+    }
+    
+    .social-account-info {
+        flex-grow: 1;
+    }
+    
+    .social-account-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .social-account-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .social-account-status {
+        display: flex;
+        align-items: center;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .status-connected {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .status-expired {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    
+    .connect-card {
+        border: 1px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .connect-card:hover {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .connect-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Minhas Contas de Redes Sociais</h5>
+                </div>
+                <div class="card-body">
+                    {% if social_accounts %}
+                        {% for account in social_accounts %}
+                            <div class="social-account-card">
+                                <div class="social-account-header">
+                                    <div class="social-account-icon {{ account.provider }}-icon">
+                                        {% if account.provider == 'facebook' %}
+                                            <i class="fab fa-facebook-f"></i>
+                                        {% elif account.provider == 'twitter' %}
+                                            <i class="fab fa-twitter"></i>
+                                        {% elif account.provider == 'google' %}
+                                            <i class="fab fa-google"></i>
+                                        {% elif account.provider == 'instagram' %}
+                                            <i class="fab fa-instagram"></i>
+                                        {% elif account.provider == 'linkedin' %}
+                                            <i class="fab fa-linkedin-in"></i>
+                                        {% elif account.provider == 'apple' %}
+                                            <i class="fab fa-apple"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="social-account-info">
+                                        <div class="social-account-name">{{ account.get_provider_display }}</div>
+                                        <div class="social-account-username">
+                                            {% if account.provider_username %}
+                                                @{{ account.provider_username }}
+                                            {% else %}
+                                                Conectado
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="social-account-status">
+                                        {% if account.is_token_expired %}
+                                            <span class="status-badge status-expired">Expirado</span>
+                                        {% else %}
+                                            <span class="status-badge status-connected">Conectado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">
+                                        Conectado em {{ account.created_at|date:"d/m/Y" }}
+                                    </div>
+                                    
+                                    <div>
+                                        {% if account.is_token_expired %}
+                                            <a href="{% url 'social:social_account_connect' account.provider %}" class="btn btn-sm btn-outline-primary me-2">
+                                                <i class="fas fa-sync-alt me-1"></i> Reconectar
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'social:social_account_disconnect' account.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-unlink me-1"></i> Desconectar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row mt-4">
+                        {% if 'facebook' not in social_accounts|map(attribute='provider')|list %}
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'social:social_account_connect' 'facebook' %}" class="text-decoration-none">
+                                    <div class="connect-card">
+                                        <div class="connect-icon">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </div>
+                                        <div class="connect-text">Conectar Facebook</div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        {% if 'twitter' not in social_accounts|map(attribute='provider')|list %}
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'social:social_account_connect' 'twitter' %}" class="text-decoration-none">
+                                    <div class="connect-card">
+                                        <div class="connect-icon">
+                                            <i class="fab fa-twitter"></i>
+                                        </div>
+                                        <div class="connect-text">Conectar Twitter</div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        {% if 'google' not in social_accounts|map(attribute='provider')|list %}
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'social:social_account_connect' 'google' %}" class="text-decoration-none">
+                                    <div class="connect-card">
+                                        <div class="connect-icon">
+                                            <i class="fab fa-google"></i>
+                                        </div>
+                                        <div class="connect-text">Conectar Google</div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        {% if 'instagram' not in social_accounts|map(attribute='provider')|list %}
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'social:social_account_connect' 'instagram' %}" class="text-decoration-none">
+                                    <div class="connect-card">
+                                        <div class="connect-icon">
+                                            <i class="fab fa-instagram"></i>
+                                        </div>
+                                        <div class="connect-text">Conectar Instagram</div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        {% if 'linkedin' not in social_accounts|map(attribute='provider')|list %}
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'social:social_account_connect' 'linkedin' %}" class="text-decoration-none">
+                                    <div class="connect-card">
+                                        <div class="connect-icon">
+                                            <i class="fab fa-linkedin-in"></i>
+                                        </div>
+                                        <div class="connect-text">Conectar LinkedIn</div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'accounts:dashboard_passenger' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Voltar para o Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

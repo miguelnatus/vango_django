@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-method-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .payment-method-card:hover {
+        border-color: #adb5bd;
+    }
+    
+    .payment-method-card.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .payment-method-card .card-brand {
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .payment-method-card .card-number {
+        color: #6c757d;
+    }
+    
+    .payment-method-icon {
+        font-size: 24px;
+        margin-right: 10px;
+        color: #0d6efd;
+    }
+    
+    .payment-method-radio {
+        margin-right: 10px;
+    }
+    
+    .booking-summary {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    
+    .booking-summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .booking-summary-total {
+        font-weight: bold;
+        font-size: 1.2rem;
+        border-top: 1px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    .coupon-form {
+        display: flex;
+        margin-bottom: 15px;
+    }
+    
+    .coupon-form input {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .coupon-form button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    .coupon-applied {
+        background-color: #e8f4f8;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .coupon-applied .coupon-code {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .payment-tabs .nav-link {
+        color: #495057;
+    }
+    
+    .payment-tabs .nav-link.active {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .card-form .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .card-row {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .card-row .form-group {
+        flex: 1;
+    }
+    
+    .pix-info, .bank-slip-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .pix-qr-placeholder {
+        width: 200px;
+        height: 200px;
+        background-color: #dee2e6;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Checkout</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Escolha a forma de pagamento</h6>
+                    
+                    <ul class="nav nav-tabs payment-tabs mb-4" id="paymentTabs" role="tablist">
+                        {% if payment_methods %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="saved-cards-tab" data-bs-toggle="tab" data-bs-target="#saved-cards" type="button" role="tab" aria-controls="saved-cards" aria-selected="true">
+                                <i class="fas fa-credit-card me-2"></i> Cartões Salvos
+                            </button>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if not payment_methods %}active{% endif %}" id="new-card-tab" data-bs-toggle="tab" data-bs-target="#new-card" type="button" role="tab" aria-controls="new-card" aria-selected="{% if not payment_methods %}true{% else %}false{% endif %}">
+                                <i class="fas fa-plus-circle me-2"></i> Novo Cartão
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pix-tab" data-bs-toggle="tab" data-bs-target="#pix" type="button" role="tab" aria-controls="pix" aria-selected="false">
+                                <i class="fas fa-qrcode me-2"></i> PIX
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="bank-slip-tab" data-bs-toggle="tab" data-bs-target="#bank-slip" type="button" role="tab" aria-controls="bank-slip" aria-selected="false">
+                                <i class="fas fa-file-invoice-dollar me-2"></i> Boleto
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="paymentTabsContent">
+                        {% if payment_methods %}
+                        <div class="tab-pane fade show active" id="saved-cards" role="tabpanel" aria-labelledby="saved-cards-tab">
+                            <form method="post" id="saved-card-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="payment_method_type" value="saved_card">
+                                <input type="hidden" name="payment_method_id" id="payment_method_id" value="{{ default_payment_method.id|default:'' }}">
+                                
+                                <div class="mb-4">
+                                    {% for method in payment_methods %}
+                                        {% if method.type == 'credit_card' or method.type == 'debit_card' %}
+                                        <div class="payment-method-card {% if method.is_default %}selected{% endif %}" data-method-id="{{ method.id }}">
+                                            <div class="d-flex align-items-center">
+                                                <input type="radio" name="payment_method_radio" class="payment-method-radio" {% if method.is_default %}checked{% endif %}>
+                                                <div>
+                                                    <div class="card-brand">{{ method.card_brand }}</div>
+                                                    <div class="card-number">•••• •••• •••• {{ method.card_last_digits }}</div>
+                                                    <div class="text-muted small">Expira em {{ method.card_expiry_month }}/{{ method.card_expiry_year }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-lock me-2"></i> Pagar R$ {{ final_amount }}
+                                    </button>
+                                    <a href="{% url 'payments:payment_method_add' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-plus-circle me-2"></i> Adicionar Novo Cartão
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="tab-pane fade {% if not payment_methods %}show active{% endif %}" id="new-card" role="tabpanel" aria-labelledby="new-card-tab">
+                            <form method="post" id="new-card-form" class="card-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="payment_method_type" value="new_card">
+                                
+                                <div class="form-group mb-3">
+                                    <label for="{{ credit_card_form.card_number.id_for_label }}" class="form-label">{{ credit_card_form.card_number.label }}</label>
+                                    {{ credit_card_form.card_number }}
+                                    {% if credit_card_form.card_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in credit_card_form.card_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="{{ credit_card_form.card_holder.id_for_label }}" class="form-label">{{ credit_card_form.card_holder.label }}</label>
+                                    {{ credit_card_form.card_holder }}
+                                    {% if credit_card_form.card_holder.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in credit_card_form.card_holder.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card-row">
+                                    <div class="form-group">
+                                        <label for="{{ credit_card_form.card_expiry_month.id_for_label }}" class="form-label">{{ credit_card_form.card_expiry_month.label }}</label>
+                                        {{ credit_card_form.card_expiry_month }}
+                                        {% if credit_card_form.card_expiry_month.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in credit_card_form.card_expiry_month.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="{{ credit_card_form.card_expiry_year.id_for_label }}" class="form-label">{{ credit_card_form.card_expiry_year.label }}</label>
+                                        {{ credit_card_form.card_expiry_year }}
+                                        {% if credit_card_form.card_expiry_year.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in credit_card_form.card_expiry_year.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="{{ credit_card_form.card_cvv.id_for_label }}" class="form-label">{{ credit_card_form.card_cvv.label }}</label>
+                                        {{ credit_card_form.card_cvv }}
+                                        {% if credit_card_form.card_cvv.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in credit_card_form.card_cvv.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-4">
+                                    {{ credit_card_form.save_card }}
+                                    <label class="form-check-label" for="{{ credit_card_form.save_card.id_for_label }}">
+                                        {{ credit_card_form.save_card.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-lock me-2"></i> Pagar R$ {{ final_amount }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="pix" role="tabpanel" aria-labelledby="pix-tab">
+                            <form method="post" id="pix-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="payment_method_type" value="pix">
+                                
+                                <div class="pix-info">
+                                    <div class="mb-3">
+                                        <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
+                                        <h5>Pagamento via PIX</h5>
+                                        <p class="text-muted">Após confirmar, você receberá um QR code para realizar o pagamento.</p>
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        O pagamento via PIX é processado instantaneamente após a confirmação.
+                                    </div>
+                                    
+                                    <div class="form-check mb-4">
+                                        {{ pix_form.confirm }}
+                                        <label class="form-check-label" for="{{ pix_form.confirm.id_for_label }}">
+                                            {{ pix_form.confirm.label }}
+                                        </label>
+                                        {% if pix_form.confirm.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in pix_form.confirm.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-qrcode me-2"></i> Gerar QR Code PIX
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="bank-slip" role="tabpanel" aria-labelledby="bank-slip-tab">
+                            <form method="post" id="bank-slip-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="payment_method_type" value="bank_slip">
+                                
+                                <div class="bank-slip-info">
+                                    <div class="mb-3">
+                                        <i class="fas fa-file-invoice-dollar fa-3x text-primary mb-3"></i>
+                                        <h5>Pagamento via Boleto Bancário</h5>
+                                        <p class="text-muted">Após confirmar, você receberá um boleto para realizar o pagamento.</p>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        O boleto leva até 3 dias úteis para ser compensado após o pagamento.
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="{{ bank_slip_form.document.id_for_label }}" class="form-label">{{ bank_slip_form.document.label }}</label>
+                                        {{ bank_slip_form.document }}
+                                        {% if bank_slip_form.document.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in bank_slip_form.document.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-check mb-4">
+                                        {{ bank_slip_form.confirm }}
+                                        <label class="form-check-label" for="{{ bank_slip_form.confirm.id_for_label }}">
+                                            {{ bank_slip_form.confirm.label }}
+                                        </label>
+                                        {% if bank_slip_form.confirm.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in bank_slip_form.confirm.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-file-invoice-dollar me-2"></i> Gerar Boleto
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Resumo da Reserva</h5>
+                </div>
+                <div class="card-body">
+                    <div class="booking-summary">
+                        <div class="booking-summary-item">
+                            <span>Rota:</span>
+                            <span>{{ booking.route.title }}</span>
+                        </div>
+                        <div class="booking-summary-item">
+                            <span>Data:</span>
+                            <span>{{ booking.date|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="booking-summary-item">
+                            <span>Horário:</span>
+                            <span>{{ booking.route.departure_time|time:"H:i" }}</span>
+                        </div>
+                        <div class="booking-summary-item">
+                            <span>Passageiros:</span>
+                            <span>{{ booking.passengers }}</span>
+                        </div>
+                        <div class="booking-summary-item">
+                            <span>Preço por passageiro:</span>
+                            <span>R$ {{ booking.route.price }}</span>
+                        </div>
+                        <div class="booking-summary-item">
+                            <span>Subtotal:</span>
+                            <span>R$ {{ booking.total_price }}</span>
+                        </div>
+                        
+                        {% if discount_amount > 0 %}
+                        <div class="booking-summary-item text-success">
+                            <span>Desconto:</span>
+                            <span>- R$ {{ discount_amount }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="booking-summary-total">
+                            <span>Total:</span>
+                            <span>R$ {{ final_amount }}</span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    {% if applied_coupon %}
+                    <div class="coupon-applied">
+                        <div>
+                            <i class="fas fa-tag me-2"></i>
+                            Cupom <span class="coupon-code">{{ applied_coupon.code }}</span> aplicado
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger" id="remove-coupon-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="coupon-form">
+                        <input type="text" class="form-control" id="coupon-code" placeholder="Código do cupom">
+                        <button type="button" class="btn btn-outline-primary" id="apply-coupon-btn">Aplicar</button>
+                    </div>
+                    {% endif %}
+                    
+                    <div id="coupon-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Selecionar método de pagamento salvo
+        const paymentMethodCards = document.querySelectorAll('.payment-method-card');
+        const paymentMethodIdInput = document.getElementById('payment_method_id');
+        
+        paymentMethodCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remover seleção anterior
+                paymentMethodCards.forEach(c => c.classList.remove('selected'));
+                
+                // Selecionar este cartão
+                this.classList.add('selected');
+                
+                // Marcar radio button
+                const radio = this.querySelector('.payment-method-radio');
+                radio.checked = true;
+                
+                // Atualizar input hidden
+                paymentMethodIdInput.value = this.dataset.methodId;
+            });
+        });
+        
+        // Aplicar cupom
+        const applyCouponBtn = document.getElementById('apply-coupon-btn');
+        const couponCodeInput = document.getElementById('coupon-code');
+        const couponMessage = document.getElementById('coupon-message');
+        
+        if (applyCouponBtn) {
+            applyCouponBtn.addEventListener('click', function() {
+                const couponCode = couponCodeInput.value.trim();
+                
+                if (!couponCode) {
+                    couponMessage.innerHTML = '<div class="alert alert-warning">Por favor, informe um código de cupom.</div>';
+                    return;
+                }
+                
+                // Enviar requisição AJAX para aplicar cupom
+                fetch('{% url "payments:apply_coupon" booking.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: `coupon_code=${couponCode}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Recarregar a página para mostrar o cupom aplicado
+                        window.location.reload();
+                    } else {
+                        couponMessage.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    }
+                })
+                .catch(error => {
+                    couponMessage.innerHTML = '<div class="alert alert-danger">Erro ao aplicar cupom. Tente novamente.</div>';
+                    console.error('Erro:', error);
+                });
+            });
+        }
+        
+        // Remover cupom
+        const removeCouponBtn = document.getElementById('remove-coupon-btn');
+        
+        if (removeCouponBtn) {
+            removeCouponBtn.addEventListener('click', function() {
+                // Enviar requisição AJAX para remover cupom
+                fetch('{% url "payments:remove_coupon" booking.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Recarregar a página para mostrar o cupom removido
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Adicionar Método de Pagamento - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-type-selector {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .payment-type-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .payment-type-card:hover {
+        border-color: #adb5bd;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .payment-type-card.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .payment-type-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+    
+    .payment-type-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .payment-type-description {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .card-form .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .card-row {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .card-row .form-group {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Adicionar Método de Pagamento</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="card-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Tipo de Método de Pagamento</label>
+                            <div class="payment-type-selector">
+                                <div class="payment-type-card {% if form.type.value == 'credit_card' %}selected{% endif %}" data-type="credit_card">
+                                    <div class="payment-type-icon text-primary">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <div class="payment-type-title">Cartão de Crédito</div>
+                                    <div class="payment-type-description">Visa, Mastercard, Amex, etc.</div>
+                                </div>
+                                
+                                <div class="payment-type-card {% if form.type.value == 'debit_card' %}selected{% endif %}" data-type="debit_card">
+                                    <div class="payment-type-icon text-success">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <div class="payment-type-title">Cartão de Débito</div>
+                                    <div class="payment-type-description">Visa Electron, Maestro, etc.</div>
+                                </div>
+                            </div>
+                            
+                            {{ form.type.as_hidden }}
+                            
+                            {% if form.type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div id="credit-card-fields">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.card_number.id_for_label }}" class="form-label">{{ form.card_number.label }}</label>
+                                {{ form.card_number }}
+                                {% if form.card_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.card_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.card_holder.id_for_label }}" class="form-label">{{ form.card_holder.label }}</label>
+                                {{ form.card_holder }}
+                                {% if form.card_holder.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.card_holder.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-row">
+                                <div class="form-group">
+                                    <label for="{{ form.card_expiry_month.id_for_label }}" class="form-label">{{ form.card_expiry_month.label }}</label>
+                                    {{ form.card_expiry_month }}
+                                    {% if form.card_expiry_month.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.card_expiry_month.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.card_expiry_year.id_for_label }}" class="form-label">{{ form.card_expiry_year.label }}</label>
+                                    {{ form.card_expiry_year }}
+                                    {% if form.card_expiry_year.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.card_expiry_year.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.card_cvv.id_for_label }}" class="form-label">{{ form.card_cvv.label }}</label>
+                                    {{ form.card_cvv }}
+                                    {% if form.card_cvv.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.card_cvv.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            {{ form.is_default }}
+                            <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                                {{ form.is_default.label }}
+                            </label>
+                        </div>
+                        
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Seus dados de pagamento são criptografados e armazenados com segurança. Nunca armazenamos o número completo do cartão ou o código de segurança.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:payment_methods_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Voltar
+                            </a>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Salvar Método de Pagamento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const paymentTypeCards = document.querySelectorAll('.payment-type-card');
+        const paymentTypeInput = document.querySelector('input[name="type"]');
+        
+        paymentTypeCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remover seleção anterior
+                paymentTypeCards.forEach(c => c.classList.remove('selected'));
+                
+                // Selecionar este cartão
+                this.classList.add('selected');
+                
+                // Atualizar input hidden
+                paymentTypeInput.value = this.dataset.type;
+            });
+        });
+    });
+</script>
+{% endblock %}

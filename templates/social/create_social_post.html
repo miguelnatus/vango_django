@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Post em Rede Social - VanGo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .social-post-form {
+        margin-bottom: 20px;
+    }
+    
+    .social-account-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .social-account-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        flex: 1;
+        min-width: 200px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .social-account-card:hover {
+        border-color: #adb5bd;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .social-account-card.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .social-account-icon {
+        font-size: 24px;
+        margin-right: 15px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .facebook-icon {
+        background-color: #3b5998;
+        color: white;
+    }
+    
+    .twitter-icon {
+        background-color: #1da1f2;
+        color: white;
+    }
+    
+    .google-icon {
+        background-color: #db4437;
+        color: white;
+    }
+    
+    .instagram-icon {
+        background-color: #e1306c;
+        color: white;
+    }
+    
+    .linkedin-icon {
+        background-color: #0077b5;
+        color: white;
+    }
+    
+    .post-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .post-preview-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .post-preview-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 15px;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #6c757d;
+    }
+    
+    .post-preview-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .post-preview-username {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .post-preview-content {
+        margin-bottom: 15px;
+    }
+    
+    .post-preview-image {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .post-preview-url {
+        color: #0d6efd;
+        word-break: break-all;
+    }
+    
+    .post-preview-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-align: right;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin-top: 10px;
+        border-radius: 8px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Criar Post em Rede Social</h5>
+                </div>
+                <div class="card-body">
+                    {% if social_accounts %}
+                        <form method="post" enctype="multipart/form-data" class="social-post-form" id="postForm">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Selecione a conta para publicar:</label>
+                                
+                                <div class="social-account-selector">
+                                    {% for account in social_accounts %}
+                                        <div class="social-account-card d-flex align-items-center {% if forloop.first %}selected{% endif %}" data-account-id="{{ account.id }}">
+                                            <div class="social-account-icon {{ account.provider }}-icon">
+                                                {% if account.provider == 'facebook' %}
+                                                    <i class="fab fa-facebook-f"></i>
+                                                {% elif account.provider == 'twitter' %}
+                                                    <i class="fab fa-twitter"></i>
+                                                {% elif account.provider == 'google' %}
+                                                    <i class="fab fa-google"></i>
+                                                {% elif account.provider == 'instagram' %}
+                                                    <i class="fab fa-instagram"></i>
+                                                {% elif account.provider == 'linkedin' %}
+                                                    <i class="fab fa-linkedin-in"></i>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div>
+                                                <div class="fw-bold">{{ account.get_provider_display }}</div>
+                                                <div class="text-muted small">
+                                                    {% if account.provider_username %}
+                                                        @{{ account.provider_username }}
+                                                    {% else %}
+                                                        Conectado
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                {{ form.social_account.as_hidden }}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
+                                {{ form.content }}
+                                {% if form.content.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.content.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="{{ form.url.id_for_label }}" class="form-label">{{ form.url.label }}</label>
+                                {{ form.url }}
+                                {% if form.url.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.url.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                                {{ form.image }}
+                                <img id="imagePreview" class="image-preview" src="#" alt="Prévia da imagem">
+                                {% if form.image.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.image.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="{{ form.scheduled_for.id_for_label }}" class="form-label">{{ form.scheduled_for.label }}</label>
+                                {{ form.scheduled_for }}
+                                {% if form.scheduled_for.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.scheduled_for.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Deixe em branco para publicar imediatamente.</div>
+                            </div>
+                            
+                            <div class="post-preview mb-4">
+                                <h6 class="mb-3">Prévia do Post</h6>
+                                
+                                <div class="post-preview-header">
+                                    <div class="post-preview-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <div class="post-preview-name">{{ user.get_full_name }}</div>
+                                        <div class="post-preview-username">@{{ social_accounts.0.provider_username|default:user.username }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="post-preview-content" id="previewContent">
+                                    O que você está pensando?
+                                </div>
+                                
+                                <div id="previewUrl" class="post-preview-url mb-3" style="display: none;"></div>
+                                
+                                <div class="post-preview-date" id="previewDate">
+                                    Agora
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'social:social_posts_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i> Voltar
+                                </a>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i> Publicar
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-exclamation-circle fa-3x text-warning"></i>
+                            </div>
+                            <h5>Nenhuma conta de rede social conectada</h5>
+                            <p class="text-muted">Você precisa conectar pelo menos uma conta de rede social para criar posts.</p>
+                            <a href="{% url 'social:social_accounts_list' %}" class="btn btn-primary mt-2">
+                                <i class="fas fa-plus-circle me-2"></i> Conectar Conta
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accountCards = document.querySelectorAll('.social-account-card');
+        const accountInput = document.querySelector('input[name="social_account"]');
+        const contentInput = document.querySelector('textarea[name="content"]');
+        const urlInput = document.querySelector('input[name="url"]');
+        const imageInput = document.querySelector('input[name="image"]');
+        const scheduledInput = document.querySelector('input[name="scheduled_for"]');
+        
+        const previewContent = document.getElementById('previewContent');
+        const previewUrl = document.getElementById('previewUrl');
+        const previewDate = document.getElementById('previewDate');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        // Inicializar com o primeiro valor
+        if (accountCards.length > 0) {
+            accountInput.value = accountCards[0].dataset.accountId;
+        }
+        
+        // Selecionar conta
+        accountCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remover seleção anterior
+                accountCards.forEach(c => c.classList.remove('selected'));
+                
+                // Selecionar este cartão
+                this.classList.add('selected');
+                
+                // Atualizar input hidden
+                accountInput.value = this.dataset.accountId;
+            });
+        });
+        
+        // Atualizar prévia do conteúdo
+        contentInput.addEventListener('input', function() {
+            previewContent.textContent = this.value || 'O que você está pensando?';
+        });
+        
+        // Atualizar prévia da URL
+        urlInput.addEventListener('input', function() {
+            if (this.value) {
+                previewUrl.textContent = this.value;
+                previewUrl.style.display = 'block';
+            } else {
+                previewUrl.style.display = 'none';
+            }
+        });
+        
+        // Atualizar prévia da imagem
+        imageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        });
+        
+        // Atualizar prévia da data
+        scheduledInput.addEventListener('input', function() {
+            if (this.value) {
+                const date = new Date(this.value);
+                previewDate.textContent = date.toLocaleString();
+            } else {
+                previewDate.textContent = 'Agora';
+            }
+        });
+    });
+</script>
+{% endblock %}
